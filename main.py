@@ -45,6 +45,53 @@ else:
 	print("~ Not so verbose")
 
 
+class KeyboardManager:
+    def __init__(self, piano):
+        #~ self.keyboard_handlers = keyboard_handlers
+        #~ self.fs = fluidsynth.Synth()
+        #~ self.fs.start(driver="alsa")
+        #~ print("~ FluidSynth Started")
+        #~ self.sfid = self.fs.sfload("/usr/share/sounds/sf2/FluidR3_GM.sf2")
+        #~ #self.sfid = self.fs.sfload("OmegaGMGS2.sf2")
+        #~ #self.sfid = self.fs.sfload("GeneralUser GS 1.471/GeneralUser GS v1.471.sf2")
+        #~ #self.sfid = self.fs.sfload("fonts/Compifont_13082016.sf2")
+        #~ self.fs.program_select(0, self.sfid, 0, 0)
+
+
+        self.midi_in = rtmidi.MidiIn()
+        available_ports = self.midi_in.get_ports()
+        if available_ports:
+            midi_port_num = 1
+            try:
+                self.midi_in_port = self.midi_in.open_port(midi_port_num)
+            except rtmidi.InvalidPortError:
+                print("Failed to open MIDI input")
+                self.midi_in_port = None
+                return
+            print("Using MIDI input Interface {}: '{}'".format(midi_port_num, available_ports[midi_port_num]))
+        else:
+            print("Creating virtual MIDI input.")
+            self.midi_in_port = self.midi_in.open_virtual_port("midi_driving_in")
+
+        self.midi_in.set_callback(self.midi_received)
+
+    def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+        #~ self.fs.delete()
+        #~ eprint("FluidSynth Closed")
+        #~ del self.fs
+        pass
+
+    def midi_received(self, midi_event, data=None):
+        current_timestamp = time.time_ns() / (10 ** 9) # Converted to floating-point seconds
+        midi_msg, delta_time = midi_event
+        if len(midi_msg) > 2:
+            pressed = (midi_msg[2] != 0)
+            note = midi_msg[1]
+            pitch_class = midi_msg[1] % 12
+            octave = midi_msg[1] // 12
+            channel = 16
+
+            print("%s" % ((pressed, note, octave, pitch_class),))
 
 class LaunchpadManager:
 	MODE_PRO = "Pro"
@@ -99,6 +146,10 @@ class LaunchpadManager:
 
 		if self.mode is None:
 			print("Did not find any Launchpads, meh...")
+
+	def finish(self):
+		self.lp.Reset() # turn all LEDs off
+		self.lp.Close() # close the Launchpad
 
 	def test(self):
 		assert( self.mode == self.MODE_MK2)
@@ -162,19 +213,19 @@ class LaunchpadManager:
 			else:
 				time.sleep(0.001 * 5)
 
-		self.lp.Reset() # turn all LEDs off
-		self.lp.Close() # close the Launchpad
-
+		self.finish()
 
 
 fifths = CircleOfFifths(500, 20)
 elements.add_element(fifths)
 
-lpbox = LaunchpadBox(20, 20)
-elements.add_element(lpbox)
-
 piano = PianoKeyboard(10, 20, window_height - 90)
 elements.add_element(piano)
+
+piano_manager = KeyboardManager(piano)
+
+lpbox = LaunchpadBox(20, 20)
+elements.add_element(lpbox)
 
 lp_manager = LaunchpadManager()
 lp_thread = Thread(target = lp_manager.run, args = (lpbox,))
@@ -190,5 +241,7 @@ pyglet.clock.schedule_interval(update, 0, window) # Specifying an interval of 0 
 
 if lp_thread:
 	lp_thread.join()
+	lp_thread = None
+
 
 print("All threads finished")
