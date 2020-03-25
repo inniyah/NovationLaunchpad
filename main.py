@@ -14,14 +14,14 @@ import launchpad
 import rtmidi
 import mido
 from threading import Thread, Lock
-from pics import CircleOfFifths, LaunchpadBox
+from pics import CircleOfFifths, LaunchpadBox, PianoKeyboard
 
 from seagull import scenegraph as sg
 from seagull.xml import parse, serialize
 from seagull.opengl.utils import gl_prepare, gl_reshape, gl_display
 from seagull.scenegraph.transform import product, normalized
 
-from window import window, elements
+from window import window, window_width, window_height, elements
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 #sys.path.append(os.path.join(this_dir))
@@ -165,11 +165,16 @@ class LaunchpadManager:
 		self.lp.Reset() # turn all LEDs off
 		self.lp.Close() # close the Launchpad
 
-fifths = CircleOfFifths(500)
+
+
+fifths = CircleOfFifths(500, 20)
 elements.add_element(fifths)
 
-lpbox = LaunchpadBox()
+lpbox = LaunchpadBox(20, 20)
 elements.add_element(lpbox)
+
+piano = PianoKeyboard(10, 20, window_height - 90)
+elements.add_element(piano)
 
 lp_manager = LaunchpadManager()
 lp_thread = Thread(target = lp_manager.run, args = (lpbox,))

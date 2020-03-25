@@ -127,3 +127,82 @@ class LaunchpadBox():
 
     def update(self):
         pass
+
+class PianoOctave():
+    def __init__(self, x_pos=0, y_pos=0):
+        with open(os.path.join(this_dir, "PianoOctave.svg")) as f:
+            svg = f.read()
+        self.model_root, self.model_elements = parse(svg)
+
+        #~ sys.stdout.write(serialize(self.model_root))
+        #~ sys.stdout.write(f"elements = {self.model_elements}\n")
+        #~ json.dump(self.model_root, sys.stdout, cls=JSONDebugEncoder, indent=2, sort_keys=True)
+        #~ json.dump(self.model_elements, sys.stdout, cls=JSONDebugEncoder, indent=2, sort_keys=True)
+        #~ sys.stdout.write("\n") # Python JSON dump misses last newline
+
+        (x_min, y_min), (x_max, y_max) = self.model_root.aabbox()
+        self.width = x_max - x_min
+        self.height = y_max - y_min
+        self.model_root = sg.Use(
+            self.model_root,
+            transform=[sg.Translate(x_pos - x_min, y_pos - y_min)]
+        )
+
+        #~ self.orig_fill_color = {}
+        #~ for note in self.NOTES:
+            #~ self.orig_fill_color[note] = self.model_elements[note].fill
+
+    def pressKey(self, key):
+        label = f"N{key:02}"
+        #~ self.model_elements[key].fill = COLORS_RGB[1]
+
+    def releaseKey(self, key):
+        label = f"N{key:02}"
+
+    def root(self):
+        return self.model_root
+
+    def size(self):
+        (x_min, y_min), (x_max, y_max) = self.model_root.aabbox()
+        return (x_max - x_min), (y_max - y_min)
+
+    def update(self):
+        pass
+
+class PianoKeyboard():
+    def __init__(self, num_octaves=10, x_pos=0, y_pos=0):
+        self.octaves = [PianoOctave() for i in range(0, num_octaves)]
+        self.elements = []
+        self.width = 0
+        self.height = 0
+        self.keys_pressed = [0] * (12 * num_octaves)
+        for octave in self.octaves:
+            (x_min, y_min), (x_max, y_max) = octave.root().aabbox()
+            element = sg.Use(
+                octave.root(),
+                transform=[sg.Translate(x_pos + self.width - x_min, y_pos - y_min)]
+            )
+            self.elements.append(element)
+            self.width += x_max - x_min - 1
+            self.height = y_max - y_min - 1
+        self.model_root = sg.Group(self.elements)
+
+    def root(self):
+        return self.model_root
+
+    def press(self, num_key, channel, action=True):
+        num_octave = num_key // 12
+        if action:
+            self.keys_pressed[num_key] |= (1<<channel)
+            if self.keys_pressed[num_key]:
+                piano.octaves[num_octave].press(MusicKeybOctave.NOTES[num_key % 12], channel)
+        else:
+            self.keys_pressed[num_key] &= ~(1<<channel)
+            if not self.keys_pressed[num_key]:
+                piano.octaves[num_octave].release(MusicKeybOctave.NOTES[num_key % 12])
+
+    def show(self, active=True):
+        self.model_root.active = active
+
+    def update(self):
+        pass
