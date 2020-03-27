@@ -8,7 +8,7 @@ from seagull.opengl.utils import gl_prepare, gl_reshape, gl_display
 
 window_width, window_height = 800, 600
 
-window = pyglet.window.Window(width=window_width, height=window_height, resizable=True)
+window = pyglet.window.Window(width=window_width, height=window_height, vsync=False, resizable=True)
 
 LEFT, MIDDLE, RIGHT = range(3)
 

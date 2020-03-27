@@ -249,9 +249,13 @@ def update(dt, window=None):
 	elements.update()
 
 gl_prepare()
+
 pyglet.clock.schedule(update, window)
 #~ pyglet.clock.schedule_interval(update, 1./60./2., window)
+
 pyglet.app.run()
+
+pyglet.clock.unschedule(update)
 #~ pyglet.clock.schedule_interval(update, 0, window) # Specifying an interval of 0 prevents the function from being called again
 
 lp_manager.stop()
