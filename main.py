@@ -57,6 +57,7 @@ class KeyboardManager:
         #~ #self.sfid = self.fs.sfload("fonts/Compifont_13082016.sf2")
         #~ self.fs.program_select(0, self.sfid, 0, 0)
 
+        self.piano = piano
 
         self.midi_in = rtmidi.MidiIn()
         available_ports = self.midi_in.get_ports()
@@ -92,6 +93,7 @@ class KeyboardManager:
             channel = 16
 
             print("%s" % ((pressed, note, octave, pitch_class),))
+            self.piano.pressOrReleaseKey(note, channel, pressed)
 
 class LaunchpadManager:
 	MODE_PRO = "Pro"
@@ -101,9 +103,16 @@ class LaunchpadManager:
 	MODE_DICER = "Dcr"
 	MODE_MK1 = "Mk1"
 
-	def __init__(self):
+	def __init__(self, lpbox):
 		self.mode = None
 		self.lp = None
+		self.running = False
+		self.thread = Thread(target = self._run, args = (lpbox,))
+
+	def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+		if self.thread:
+			self.thread.join()
+			self.thread = None
 
 	def setup(self):
 		self.mode = None
@@ -189,7 +198,7 @@ class LaunchpadManager:
 		self.lp.Reset()
 
 
-	def run(self, lpbox):
+	def _run(self, lpbox):
 		self.setup()
 
 		# Clear the buffer because the Launchpad remembers everything :-)
@@ -197,7 +206,7 @@ class LaunchpadManager:
 
 		butHit = 10
 
-		while True:
+		while self.running:
 			but = self.lp.ButtonStateRaw()
 
 			if but != []:
@@ -215,6 +224,12 @@ class LaunchpadManager:
 
 		self.finish()
 
+	def start(self):
+		self.running = True
+		self.thread.start()
+
+	def stop(self):
+		self.running = False
 
 fifths = CircleOfFifths(500, 20)
 elements.add_element(fifths)
@@ -227,21 +242,20 @@ piano_manager = KeyboardManager(piano)
 lpbox = LaunchpadBox(20, 20)
 elements.add_element(lpbox)
 
-lp_manager = LaunchpadManager()
-lp_thread = Thread(target = lp_manager.run, args = (lpbox,))
-lp_thread.start()
+lp_manager = LaunchpadManager(lpbox)
+lp_manager.start()
 
 def update(dt, window=None):
 	elements.update()
 
 gl_prepare()
-pyglet.clock.schedule_interval(update, 1./60, window)
+pyglet.clock.schedule(update, window)
+#~ pyglet.clock.schedule_interval(update, 1./60./2., window)
 pyglet.app.run()
-pyglet.clock.schedule_interval(update, 0, window) # Specifying an interval of 0 prevents the function from being called again
+#~ pyglet.clock.schedule_interval(update, 0, window) # Specifying an interval of 0 prevents the function from being called again
 
-if lp_thread:
-	lp_thread.join()
-	lp_thread = None
+lp_manager.stop()
+
 
 
 print("All threads finished")

@@ -129,6 +129,11 @@ class LaunchpadBox():
         pass
 
 class PianoOctave():
+    BLACK = sg.Color(0, 0, 0)
+    WHITE = sg.Color(255, 255, 255)
+
+    COLOR_UNPRESSED = [WHITE, BLACK, WHITE, BLACK, WHITE, WHITE, BLACK, WHITE, BLACK, WHITE, BLACK, WHITE]
+
     def __init__(self, x_pos=0, y_pos=0):
         with open(os.path.join(this_dir, "PianoOctave.svg")) as f:
             svg = f.read()
@@ -154,10 +159,11 @@ class PianoOctave():
 
     def pressKey(self, key):
         label = f"N{key:02}"
-        #~ self.model_elements[key].fill = COLORS_RGB[1]
+        self.model_elements[label].fill = COLORS_RGB[1]
 
     def releaseKey(self, key):
         label = f"N{key:02}"
+        self.model_elements[label].fill = self.COLOR_UNPRESSED[key]
 
     def root(self):
         return self.model_root
@@ -190,16 +196,17 @@ class PianoKeyboard():
     def root(self):
         return self.model_root
 
-    def press(self, num_key, channel, action=True):
+    def pressOrReleaseKey(self, num_key, channel, press=True):
         num_octave = num_key // 12
-        if action:
+        num_class = num_key % 12
+        if press:
             self.keys_pressed[num_key] |= (1<<channel)
             if self.keys_pressed[num_key]:
-                piano.octaves[num_octave].press(MusicKeybOctave.NOTES[num_key % 12], channel)
+                self.octaves[num_octave].pressKey(num_class)
         else:
             self.keys_pressed[num_key] &= ~(1<<channel)
             if not self.keys_pressed[num_key]:
-                piano.octaves[num_octave].release(MusicKeybOctave.NOTES[num_key % 12])
+                self.octaves[num_octave].releaseKey(num_class)
 
     def show(self, active=True):
         self.model_root.active = active
