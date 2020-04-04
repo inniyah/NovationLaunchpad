@@ -30,6 +30,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
         notes_in_scale = self.music_info.notes_in_scale
+        root_note = self.music_info.root_note % 12
 
         cx = xpos + width / 2.
         cy = ypos + height / 2.
@@ -111,7 +112,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
             ctx.arc(nx[n], ny[n], note_radius, 0, 2. * math.pi)
             ctx.stroke()
 
-            if (n % 12 == self.music_info.root_note):
+            if (n % 12 == root_note):
                 ctx.set_source_rgb(0., 0., 0.)
                 ctx.arc(nx[n], ny[n], note_radius + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)

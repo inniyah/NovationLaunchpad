@@ -161,8 +161,8 @@ class LaunchpadElement(layout.root.LayoutElement):
         self.border_gap = 10.
         self.sq_width = 20.
         self.sq_height = 20.
-        self.sq_hgap = 4.
-        self.sq_vgap = 4.
+        self.sq_hgap = 5.
+        self.sq_vgap = 5.
 
         self.max_pos = 100
         self.null_color = (0., 0., 0.)
