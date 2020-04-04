@@ -21,6 +21,7 @@ import layout
 
 from components.piano_keyboard     import KeyboardManager, PianoElement
 from components.novation_launchpad import LaunchpadManager, LaunchpadElement
+from components.diagram_of_thirds  import DiagramOfThirdsElement
 
 # This works for counting non-zero bits in 64-bit positive numbers
 def count_bits(n):
@@ -95,11 +96,12 @@ class MainWindow(Gtk.Window):
 def main():
     piano = PianoElement()
     lpad = LaunchpadElement()
+    dthirds = DiagramOfThirdsElement()
 
     box = layout.BoxLM()
     box.left = lpad
     box.top = piano
-    box.center = DummyElement(30, 40)
+    box.center = dthirds
     box.bottom = DummyElement(50, 10)
     box.right = DummyElement(20, 50)
     box.margin = 1
