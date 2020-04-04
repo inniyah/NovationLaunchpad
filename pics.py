@@ -13,6 +13,12 @@ from seagull.scenegraph.transform import product, normalized
 
 from colors import COLORS_RGB, LAUNCHPAD_COLORS
 
+def adj_color(red, green, blue, factor=1.0):
+    return (int(red*factor), int(green*factor), int(blue*factor))
+
+COLORS_RGB = [sg.Color(*adj_color(r, g, b)) for (r, g, b) in COLORS_RGB]
+LAUNCHPAD_COLORS = [sg.Color(*adj_color(r, g, b)) for (r, g, b) in LAUNCHPAD_COLORS]
+
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 class JSONDebugEncoder(json.JSONEncoder):
