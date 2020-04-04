@@ -172,7 +172,7 @@ class LaunchpadElement(layout.root.LayoutElement):
         width  = (self.rows + 1) * self.sq_height + self.rows * self.sq_vgap + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
-    def get_minimum_size(self, data):
+    def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):

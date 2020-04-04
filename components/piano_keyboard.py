@@ -81,7 +81,7 @@ class PianoElement(layout.root.LayoutElement):
         max_octaves = 10
         self.keys_pressed = [0] * (12 * max_octaves)
 
-    def get_minimum_size(self, data):
+    def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):

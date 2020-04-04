@@ -26,11 +26,11 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         self.set_root(0)
 
     def set_root(self, note):
-        self.root_note = 0
+        self.root_note = note
         scale = self.SCALE_MAJOR_DIATONIC
         self.notes_in_scale = [(scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
 
-    def get_minimum_size(self, data):
+    def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):
@@ -92,11 +92,14 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
 
         for n in range(12):
             is_pressed = False
-            note_radius = 15
 
             if self.notes_in_scale[n % 12]:
+                note_radius = 15
+                note_border = 2.0
                 color = get_color_from_note(n, 1.)
             else:
+                note_radius = 10
+                note_border = 1.0
                 color = get_color_from_note(n, .1)
 
             ctx.set_source_rgb(*color)
@@ -106,7 +109,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
             if is_pressed:
                 ctx.set_line_width(6.0)
             else:
-                ctx.set_line_width(2.0)
+                ctx.set_line_width(note_border)
 
             #ctx.move_to(x + note_radius, y)
             ctx.set_source_rgb(0.3, 0.3, 0.3)
