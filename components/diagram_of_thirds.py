@@ -16,8 +16,10 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
     #PIANO_NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
-    def __init__(self):
-        self.central_note = 60
+    def __init__(self, music_info):
+        self.music_info = music_info
+
+        self.central_note = self.music_info.root_note
         self.central_voffset = 5 - ((self.central_note*7) % 24)
         self.first_note = self.central_note - 3 * 12 - 1
         self.last_note = self.central_note + 3 * 12 + 6
@@ -30,18 +32,12 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         width = self.step_size * self.num_notes + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
-        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, self.central_note)
-
-    def set_root(self, scale, note):
-        self.scale = scale
-        self.root_note = note % 12
-        self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
-
     def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
+        notes_in_scale = self.music_info.notes_in_scale
 
         note_radius = 12
         base_y = ypos + height - self.border_gap - note_radius
@@ -61,7 +57,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             ctx.stroke()
 
             if i >= 4 and y_steps >= 4:
-                if self.notes_in_scale[n % 12] and self.notes_in_scale[(n + 8) % 12]:
+                if notes_in_scale[n % 12] and notes_in_scale[(n + 8) % 12]:
                     ctx.set_source_rgb(0.0, 0.0, 0.0)
                 else:
                     ctx.set_source_rgb(0.8, 0.8, 0.8)
@@ -70,7 +66,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
                 ctx.stroke()
 
             if i < self.num_notes - 3 and y_steps >= 3:
-                if self.notes_in_scale[n % 12] and self.notes_in_scale[(n + 3) % 12]:
+                if notes_in_scale[n % 12] and notes_in_scale[(n + 3) % 12]:
                     ctx.set_source_rgb(0.0, 0.0, 0.0)
                 else:
                     ctx.set_source_rgb(0.8, 0.8, 0.8)
@@ -86,7 +82,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             y_step_height = effective_h / 23.
             y = base_y - y_step_height * y_steps
 
-            if self.notes_in_scale[n % 12]:
+            if notes_in_scale[n % 12]:
                 r = note_radius
             else:
                 r = note_radius * .7
@@ -97,7 +93,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             ctx.stroke()
 
             border_color = (0., 0., 0.)
-            if self.notes_in_scale[n % 12]:
+            if notes_in_scale[n % 12]:
                 note_color = get_color_from_note(n, 1.)
                 note_border = 2.0
             else:
@@ -112,7 +108,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             ctx.set_line_width(note_border)
             ctx.stroke()
 
-            if (n % 12 == self.root_note):
+            if (n % 12 == self.music_info.root_note):
                 ctx.set_source_rgb(0., 0., 0.)
                 ctx.arc(x, y, r + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)

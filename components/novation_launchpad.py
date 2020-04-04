@@ -154,7 +154,7 @@ class LaunchpadManager:
 
 
 class LaunchpadElement(layout.root.LayoutElement):
-    def __init__(self):
+    def __init__(self, music_info):
         self.rows  = 8
         self.cols  = 8
 

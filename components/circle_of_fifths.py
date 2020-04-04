@@ -16,24 +16,20 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
     #PIANO_NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
-    def __init__(self):
+    def __init__(self, music_info):
+        self.music_info = music_info
+
         self.border_gap = 10.
         height = 230 + self.border_gap * 2
         width = 230 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
-
-        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 0)
-
-    def set_root(self, scale, note):
-        self.scale = scale
-        self.root_note = note % 12
-        self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
 
     def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
+        notes_in_scale = self.music_info.notes_in_scale
 
         cx = xpos + width / 2.
         cy = ypos + height / 2.
@@ -92,7 +88,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         for n in range(12):
             is_pressed = False
 
-            if self.notes_in_scale[n % 12]:
+            if notes_in_scale[n % 12]:
                 note_radius = 15
                 note_border = 2.0
                 color = get_color_from_note(n, 1.)
@@ -115,7 +111,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
             ctx.arc(nx[n], ny[n], note_radius, 0, 2. * math.pi)
             ctx.stroke()
 
-            if (n % 12 == self.root_note):
+            if (n % 12 == self.music_info.root_note):
                 ctx.set_source_rgb(0., 0., 0.)
                 ctx.arc(nx[n], ny[n], note_radius + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)

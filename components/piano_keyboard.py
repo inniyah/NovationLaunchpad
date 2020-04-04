@@ -67,7 +67,9 @@ class PianoElement(layout.root.LayoutElement):
     WHITE_KEYS = set([0, 2, 4, 5, 7, 9, 11])
     PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
-    def __init__(self):
+    def __init__(self, music_info):
+        self.music_info = music_info
+
         self.white_key_width = 18.
         self.white_key_height = 100.
         self.octave_start = 3
@@ -94,6 +96,8 @@ class PianoElement(layout.root.LayoutElement):
         black_key_width = white_key_width * 7. / 12.
         black_key_height = white_key_height * .6
 
+        root_note = self.music_info.root_note % 12
+
         # White Keys
         pos = 0
         for n in range(12 * self.octave_start, 12 * (self.octave_start + self.num_octaves) + self.extra_keys):
@@ -104,7 +108,6 @@ class PianoElement(layout.root.LayoutElement):
             x2 = xpos + (pos + 1) * white_key_width
             pos += 1
 
-            root_note = 0
             is_pressed = self.keys_pressed[n]
             channel = 1
 

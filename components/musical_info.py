@@ -206,4 +206,9 @@ class MusicDefs:
 
 class MusicalInfo():
     def __init__(self):
-        pass
+        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 60)
+
+    def set_root(self, scale, note):
+        self.scale = scale
+        self.root_note = note % 12
+        self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
