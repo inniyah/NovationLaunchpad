@@ -10,12 +10,11 @@ import cairo
 import layout
 
 from .colors import get_color_from_note
+from .musical_info import MusicDefs
 
 class CircleOfFifthsElement(layout.root.LayoutElement):
     #PIANO_NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
-
-    SCALE_MAJOR_DIATONIC = (1<<0) + (1<<2) + (1<<4) + (1<<5) + (1<<7) + (1<<9) + (1<<11)
 
     def __init__(self):
         self.border_gap = 10.
@@ -23,12 +22,12 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         width = 230 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
-        self.set_root(0)
+        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 0)
 
-    def set_root(self, note):
-        self.root_note = note
-        scale = self.SCALE_MAJOR_DIATONIC
-        self.notes_in_scale = [(scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
+    def set_root(self, scale, note):
+        self.scale = scale
+        self.root_note = note % 12
+        self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
 
     def get_minimum_size(self, ctx):
         return self.size

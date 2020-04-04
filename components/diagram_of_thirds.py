@@ -10,30 +10,32 @@ import cairo
 import layout
 
 from .colors import get_color_from_note
+from .musical_info import MusicDefs
 
 class DiagramOfThirdsElement(layout.root.LayoutElement):
     #PIANO_NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
-    SCALE_MAJOR_DIATONIC = (1<<0) + (1<<2) + (1<<4) + (1<<5) + (1<<7) + (1<<9) + (1<<11)
-
     def __init__(self):
-        self.first_note = 48 - 2
-        self.last_note = 84 + 2
+        self.central_note = 60
+        self.central_voffset = 5 - ((self.central_note*7) % 24)
+        self.first_note = self.central_note - 3 * 12 - 1
+        self.last_note = self.central_note + 3 * 12 + 6
         self.num_notes = self.last_note - self.first_note + 1
-        self.step_size = 18
 
+        self.step_size = 10
         self.border_gap = 10.
+
         height = 400 + self.border_gap * 2
         width = self.step_size * self.num_notes + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
-        self.set_root(0)
+        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, self.central_note)
 
-    def set_root(self, note):
-        self.root_note = note
-        scale = self.SCALE_MAJOR_DIATONIC
-        self.notes_in_scale = [(scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
+    def set_root(self, scale, note):
+        self.scale = scale
+        self.root_note = note % 12
+        self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
 
     def get_minimum_size(self, ctx):
         return self.size
@@ -41,7 +43,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
 
-        note_radius = self.step_size * 1.5 / 2.0
+        note_radius = 12
         base_y = ypos + height - self.border_gap - note_radius
         effective_h = (height - 2. * self.border_gap - 2. * note_radius)
 
@@ -49,7 +51,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             n = self.first_note + i
             x = xpos + self.border_gap + self.step_size * (i + 1)
 
-            y_steps = (((n - self.root_note) * 7 - 7) % 24)
+            y_steps = ((n * 7 + self.central_voffset) % 24)
             y_step_height = effective_h / 23.
             y = base_y - y_step_height * y_steps
 
@@ -79,7 +81,11 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         for i in range(self.num_notes):
             n = self.first_note + i
             x = xpos + self.border_gap + self.step_size * (i + 1)
-            y = base_y - effective_h / 23. * (((n - self.root_note) * 7 - 7) % 24)
+
+            y_steps = ((n * 7 + self.central_voffset) % 24)
+            y_step_height = effective_h / 23.
+            y = base_y - y_step_height * y_steps
+
             if self.notes_in_scale[n % 12]:
                 r = note_radius
             else:
