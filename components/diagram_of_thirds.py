@@ -48,15 +48,46 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         for i in range(self.num_notes):
             n = self.first_note + i
             x = xpos + self.border_gap + self.step_size * (i + 1)
-            y = base_y - effective_h * (((n - self.root_note) * 7 - 7) % 24) / 23.
+
+            y_steps = (((n - self.root_note) * 7 - 7) % 24)
+            y_step_height = effective_h / 23.
+            y = base_y - y_step_height * y_steps
+
+            ctx.set_source_rgb(0.9, 0.9, 0.9)
+            ctx.move_to(x, ypos + self.border_gap)
+            ctx.line_to(x, ypos + height - self.border_gap)
+            ctx.stroke()
+
+            if i >= 4 and y_steps >= 4:
+                if self.notes_in_scale[n % 12] and self.notes_in_scale[(n + 8) % 12]:
+                    ctx.set_source_rgb(0.0, 0.0, 0.0)
+                else:
+                    ctx.set_source_rgb(0.8, 0.8, 0.8)
+                ctx.move_to(x, y)
+                ctx.line_to(x - 4. * self.step_size, y + 4. * y_step_height)
+                ctx.stroke()
+
+            if i < self.num_notes - 3 and y_steps >= 3:
+                if self.notes_in_scale[n % 12] and self.notes_in_scale[(n + 3) % 12]:
+                    ctx.set_source_rgb(0.0, 0.0, 0.0)
+                else:
+                    ctx.set_source_rgb(0.8, 0.8, 0.8)
+                ctx.move_to(x, y)
+                ctx.line_to(x + 3. * self.step_size, y + 3. * y_step_height)
+                ctx.stroke()
+
+        for i in range(self.num_notes):
+            n = self.first_note + i
+            x = xpos + self.border_gap + self.step_size * (i + 1)
+            y = base_y - effective_h / 23. * (((n - self.root_note) * 7 - 7) % 24)
             if self.notes_in_scale[n % 12]:
                 r = note_radius
             else:
                 r = note_radius * .7
 
-            ctx.set_source_rgb(0.9, 0.9, 0.9)
-            ctx.move_to(x, ypos + self.border_gap)
-            ctx.line_to(x, ypos + height - self.border_gap)
+            ctx.set_source_rgb(0., 0., 0.)
+            ctx.move_to(x, y)
+            ctx.line_to(x, y)
             ctx.stroke()
 
             border_color = (0., 0., 0.)
