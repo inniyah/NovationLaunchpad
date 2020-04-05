@@ -205,8 +205,12 @@ class MusicDefs:
     INTERVAL_NAMES =       [ 'I',     'ii',   'II',      'iii', 'III',   'IV',    'v',     'V',     'vi',    'VI',    'vii',   'VII' ]
 
 class MusicalInfo():
+    #NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
+    NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+
     def __init__(self):
         self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 60)
+        self.note_names = self.NOTE_NAMES
 
     def set_root(self, scale, note):
         self.scale = scale

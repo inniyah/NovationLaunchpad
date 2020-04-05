@@ -65,7 +65,6 @@ class KeyboardManager:
 
 class PianoElement(layout.root.LayoutElement):
     WHITE_KEYS = set([0, 2, 4, 5, 7, 9, 11])
-    PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
     def __init__(self, music_info):
         self.music_info = music_info
@@ -97,6 +96,7 @@ class PianoElement(layout.root.LayoutElement):
         black_key_height = white_key_height * .6
 
         root_note = self.music_info.root_note % 12
+        note_names = self.music_info.note_names
 
         # White Keys
         pos = 0
@@ -135,7 +135,7 @@ class PianoElement(layout.root.LayoutElement):
                 ctx.arc(press_x, press_y, press_r, 0, 2. * math.pi)
                 ctx.fill()
 
-            label = self.PIANO_NOTE_NAMES[n % 12]
+            label = note_names[n % 12]
             ctx.set_source_rgb(0., 0., 0.)
             ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             ctx.set_font_size(8)
@@ -180,7 +180,7 @@ class PianoElement(layout.root.LayoutElement):
                 ctx.arc(press_x, press_y, press_r, 0, 2. * math.pi)
                 ctx.fill()
 
-            label = self.PIANO_NOTE_NAMES[n % 12]
+            label = note_names[n % 12]
             ctx.set_source_rgb(1., 1., 1.)
             ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             ctx.set_font_size(6)

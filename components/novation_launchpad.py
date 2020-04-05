@@ -18,6 +18,28 @@ from .colors import COLORS_RGB, LAUNCHPAD_COLORS, hsv_to_rgb
 COLORS_RGB       = [(r / 255., g / 255., b / 255.) for (r, g, b) in COLORS_RGB]
 LAUNCHPAD_COLORS = [(r / 255., g / 255., b / 255.) for (r, g, b) in LAUNCHPAD_COLORS]
 
+LAUNCHPAD_LAYOUTS = {
+    #   (  D )      (  A )      (  E )
+    #   (  F )      [  C ]      (  G )
+    # ( G# / Ab ) ( D# / Eb ) ( A# / Bb )
+    'VI_V': lambda x, y: (x - 3) * 7 + (y - 3) * 9,
+
+    #   (  A )      (  E )      (  B )
+    #   (  F )      [  C ]      (  G )
+    # ( C# / Db ) ( G# / Ab ) ( D# / Eb )
+    'III_V': lambda x, y: (x - 3) * 7 + (y - 3) * 4,
+
+    # ( C# / Db )   (  E )      (  G )
+    #   (  A )      [  C ]    ( D# / Eb )
+    #   (  F )    ( G# / Ab )   (  B )
+    'III_iii': lambda x, y: (x - 3) * 3 + (y - 3) * 4,
+
+    # ( A# / Bb ) ( C# / Db )   (  E )
+    #   (  A )      [  C ]    ( D# / Eb )
+    # ( G# / Ab )   (  B )      (  D )
+    'ii_iii': lambda x, y: (x - 2) * 3 + (y - 2) * 1,
+}
+
 class LaunchpadManager:
     MODE_PRO = "Pro"
     MODE_MK2 = "Mk2"
@@ -154,7 +176,10 @@ class LaunchpadManager:
 
 
 class LaunchpadElement(layout.root.LayoutElement):
-    def __init__(self, music_info):
+    def __init__(self, music_info, lp_layout):
+        self.music_info = music_info
+        self.lp_layout = lp_layout
+
         self.rows  = 8
         self.cols  = 8
 
@@ -165,8 +190,9 @@ class LaunchpadElement(layout.root.LayoutElement):
         self.sq_vgap = 5.
 
         self.max_pos = 100
-        self.null_color = (0., 0., 0.)
+        self.null_color = (0.7, 0.8, 0.8)
         self.color = [self.null_color] * self.max_pos
+        self.label = ['xx'] * self.max_pos
 
         height = (self.cols + 1) * self.sq_width + self.cols * self.sq_hgap + self.border_gap * 2
         width  = (self.rows + 1) * self.sq_height + self.rows * self.sq_vgap + self.border_gap * 2
@@ -182,6 +208,7 @@ class LaunchpadElement(layout.root.LayoutElement):
 
         color = self.null_color
         border = (0.5, 0.5, 0.5)
+        note_names = self.music_info.note_names
 
         for button_y in range(self.rows):
             y1 = ypos + (1 + button_y) * (self.sq_height + self.sq_vgap)
@@ -202,14 +229,29 @@ class LaunchpadElement(layout.root.LayoutElement):
                 ctx.set_line_width(1)
                 ctx.stroke()
 
+                #~ label = self.label[button_x + (7 - button_y) * 10]
+                label = note_names[(self.music_info.root_note + self.lp_layout(button_x, 7 - button_y)) % 12]
+                ctx.set_source_rgb(0.1, 0.1, 0.1)
+                ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+                ctx.set_font_size(min(self.sq_width, self.sq_height) * 0.6)
+                text_extents = ctx.text_extents(str(label))
+                ctx.move_to(x1 + self.sq_width / 2. - text_extents.width / 2., y1 + self.sq_height / 2. + text_extents.height / 2.)
+                ctx.show_text(str(label))
+
         y = ypos + self.sq_height / 2.
         r = min(self.sq_width, self.sq_height) / 2.
         for button_x in range(self.cols):
             x = xpos + button_x * (self.sq_width + self.sq_hgap) + self.sq_width / 2.
+
             color = self.color[button_x + 80]
             ctx.set_source_rgb(*color)
+
+            ctx.move_to(x + r, y)
+            ctx.line_to(x + r, y)
+
             ctx.arc(x, y, r, 0, 2. * math.pi)
             ctx.fill_preserve()
+
             ctx.set_source_rgb(*border)
             ctx.set_line_width(1)
             ctx.stroke()

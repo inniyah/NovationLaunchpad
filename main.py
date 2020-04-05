@@ -20,7 +20,7 @@ import cairo
 import layout
 
 from components.piano_keyboard     import KeyboardManager, PianoElement
-from components.novation_launchpad import LaunchpadManager, LaunchpadElement
+from components.novation_launchpad import LaunchpadManager, LaunchpadElement, LAUNCHPAD_LAYOUTS
 from components.diagram_of_thirds  import DiagramOfThirdsElement
 from components.circle_of_fifths   import CircleOfFifthsElement
 from components.musical_info       import MusicDefs, MusicalInfo
@@ -53,6 +53,32 @@ class DummyElement(layout.root.LayoutElement):
         ctx.set_source_rgb(1., 1., 0.)
         ctx.set_line_width(2)
         ctx.stroke()
+
+import PIL.Image as Image
+
+class ImageElement(layout.root.LayoutElement):
+    def __init__(self, height, width):
+        self.size = layout.datatypes.Point(height, width)
+        self.surface = None
+    def set_image(filename):
+        img = Image.open(filename)
+        self.surface = from_pil(img)
+    def from_pil(im, alpha=1.0, format=cairo.FORMAT_ARGB32):
+        """
+        :param im: Pillow Image
+        :param alpha: 0..1 alpha to add to non-alpha images
+        :param format: Pixel format for output surface
+        """
+        assert format in (cairo.FORMAT_RGB24, cairo.FORMAT_ARGB32), "Unsupported pixel format: %s" % format
+        if 'A' not in im.getbands():
+            im.putalpha(int(alpha * 256.))
+        arr = bytearray(im.tobytes('raw', 'BGRa'))
+        surface = cairo.ImageSurface.create_for_data(arr, format, im.width, im.height)
+        return surface
+    def get_minimum_size(self, ctx):
+        return self.size
+    def render(self, rect, ctx):
+        xpos, ypos, width, height = rect.get_data()
 
 class MainWindow(Gtk.Window):
     def __init__(self, elements):
@@ -100,7 +126,7 @@ class MainWindow(Gtk.Window):
 def main():
     music_info = MusicalInfo()
     piano = PianoElement(music_info)
-    lpad = LaunchpadElement(music_info)
+    lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS['III_iii'])
     dthirds = DiagramOfThirdsElement(music_info)
     cfifths = CircleOfFifthsElement(music_info)
 

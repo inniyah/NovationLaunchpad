@@ -13,9 +13,6 @@ from .colors import get_color_from_note
 from .musical_info import MusicDefs
 
 class CircleOfFifthsElement(layout.root.LayoutElement):
-    #PIANO_NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
-    PIANO_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
-
     def __init__(self, music_info):
         self.music_info = music_info
 
@@ -118,7 +115,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
                 ctx.set_line_width(1.0)
                 ctx.stroke()
 
-            label = self.PIANO_NOTE_NAMES[n % 12]
+            label = self.music_info.note_names[n % 12]
             ctx.set_source_rgb(0.1, 0.1, 0.1)
             ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             ctx.set_font_size(note_radius + 2)
