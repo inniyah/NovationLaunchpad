@@ -28,8 +28,16 @@ class KeyboardManager:
 
         self.midi_in = rtmidi.MidiIn()
         available_ports = self.midi_in.get_ports()
+
+        midi_port_name = 'USB Uno MIDI Interface'
+        midi_port_num = 1 if len(available_ports) > 0 else 0
+        print("MIDI input ports:")
+        for port_num, port_name in enumerate(available_ports):
+            print("    %s" % (port_name,))
+            if port_name.lower().find( midi_port_name.lower() ) >= 0:
+                midi_port_num = port_num
+
         if available_ports:
-            midi_port_num = 1
             try:
                 self.midi_in_port = self.midi_in.open_port(midi_port_num)
             except rtmidi.InvalidPortError:
