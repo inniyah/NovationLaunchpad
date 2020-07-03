@@ -19,10 +19,13 @@ from gi.repository import Rsvg
 import cairo
 import layout
 
+import rtmidi
+
 from components.piano_keyboard     import KeyboardManager, PianoElement
 from components.novation_launchpad import LaunchpadManager, LaunchpadElement, LAUNCHPAD_LAYOUTS
 from components.diagram_of_thirds  import DiagramOfThirdsElement
 from components.circle_of_fifths   import CircleOfFifthsElement
+from components.tonal_map          import TonalMapElement
 from components.musical_info       import MusicDefs, MusicalInfo
 
 # This works for counting non-zero bits in 64-bit positive numbers
@@ -124,16 +127,25 @@ class MainWindow(Gtk.Window):
         self.queue_draw()
 
 def main():
+    parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
+    parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
+    args = parser.parse_args()
+
+    midi_out = rtmidi.MidiOut()
+    midi_out.open_virtual_port(args.port_name)
+    print(f"Virtual MIDI port: '{args.port_name}'")
+
     music_info = MusicalInfo()
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS['III_iii'])
     dthirds = DiagramOfThirdsElement(music_info)
     cfifths = CircleOfFifthsElement(music_info)
+    tonalmap = TonalMapElement(music_info)
 
     box = layout.BoxLM()
     box.left = lpad
     box.top = piano
-    box.center = dthirds
+    box.center = tonalmap #dthirds
     box.bottom = DummyElement(50, 10)
     box.right = cfifths
     box.margin = 1
