@@ -13,7 +13,7 @@ import rtmidi
 from .colors import hsv_to_rgb
 
 class KeyboardManager:
-    def __init__(self, piano):
+    def __init__(self, piano, midi_out=None):
         #~ self.keyboard_handlers = keyboard_handlers
         #~ self.fs = fluidsynth.Synth()
         #~ self.fs.start(driver="alsa")
@@ -25,6 +25,7 @@ class KeyboardManager:
         #~ self.fs.program_select(0, self.sfid, 0, 0)
 
         self.piano = piano
+        self.midi_out = midi_out
 
         self.midi_in = rtmidi.MidiIn()
         available_ports = self.midi_in.get_ports()
@@ -65,11 +66,14 @@ class KeyboardManager:
             note = midi_msg[1]
             pitch_class = midi_msg[1] % 12
             octave = midi_msg[1] // 12
-            channel = 16
+            channel = 0
+            velocity = midi_msg[2]
 
-            print("%s" % ((pressed, note, octave, pitch_class),))
+            print(f"[Piano MIDI Rcv] ({pressed}, {note}, {octave}, {pitch_class}, {velocity})")
             if self.piano:
-                self.piano.pressOrReleaseKey(note, channel, pressed)
+                self.piano.pressOrReleaseKey(channel, note, pressed)
+            if self.midi_out:
+                self.midi_out.play_note(channel, note, velocity)
 
 class PianoElement(layout.root.LayoutElement):
     WHITE_KEYS = set([0, 2, 4, 5, 7, 9, 11])
@@ -206,7 +210,7 @@ class PianoElement(layout.root.LayoutElement):
             return (0.9, 0.9, 0.9)
         return hsv_to_rgb(360. * ((channel*17)%32)/32., saturation, value)
 
-    def pressOrReleaseKey(self, num_key, channel, press=True):
+    def pressOrReleaseKey(self, channel, num_key, press=True):
         num_octave = num_key // 12
         num_class = num_key % 12
         if press:

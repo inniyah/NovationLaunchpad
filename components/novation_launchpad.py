@@ -48,7 +48,9 @@ class LaunchpadManager:
     MODE_DICER = "Dcr"
     MODE_MK1 = "Mk1"
 
-    def __init__(self, lpbox):
+    def __init__(self, lpbox, midi_out=None):
+        self.midi_out = midi_out
+
         self.mode = None
         self.lp = None
         self.running = False

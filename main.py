@@ -28,6 +28,8 @@ from components.circle_of_fifths   import CircleOfFifthsElement
 from components.tonal_map          import TonalMapElement
 from components.musical_info       import MusicDefs, MusicalInfo
 
+import components.fluidsynth as fluidsynth
+
 # This works for counting non-zero bits in 64-bit positive numbers
 def count_bits(n):
     n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)
@@ -97,7 +99,7 @@ class MainWindow(Gtk.Window):
         self.init_ui()
 
         rsvg_handle = Rsvg.Handle()
-        self.svg = rsvg_handle.new_from_file("CircleOfTriads.svg")
+        #~ self.svg = rsvg_handle.new_from_file("CircleOfTriads.svg")
 
     def init_ui(self):
         darea = Gtk.DrawingArea()
@@ -116,7 +118,7 @@ class MainWindow(Gtk.Window):
         #~ cr.set_font_size(40)
         
         #~ cr.move_to(10, 50)
-        #~ cr.show_text("Disziplin ist Macht.")
+        #~ cr.show_text("Novation Launchpad MIDI Player")
 
         #~ self.svg.render_cairo(cr)
 
@@ -126,16 +128,79 @@ class MainWindow(Gtk.Window):
             cr.restore()
         self.queue_draw()
 
+class MidiOutput:
+    def __init__(self, port_name):
+        self.port_name = port_name
+        self.midi_out = rtmidi.MidiOut()
+        self.midi_out.open_virtual_port(self.port_name)
+        print(f"~ Virtual MIDI port: '{self.port_name}'")
+
+        self.fs = fluidsynth.Synth()
+        self.fs.start(driver="alsa")
+        print("~ FluidSynth Started")
+
+        self.sfid = self.fs.sfload("/usr/share/sounds/sf2/FluidR3_GM.sf2")
+        for channel in range(0, 16):
+            self.fs.program_select(channel, self.sfid, 0, 0)
+
+    def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+        self.fs.delete()
+        print("~ FluidSynth Closed")
+        del self.fs
+
+    def press(self, key, velocity=64, duration=0.5):
+        self.fs.noteon(0, key + 19, velocity)
+        if self.keyboard_handlers:
+            for keyboard_handler in self.keyboard_handlers:
+                keyboard_handler.press(key + 19, 1, True)
+        time.sleep(duration)
+        self.fs.noteoff(0, key + 19)
+        if self.keyboard_handlers:
+            for keyboard_handler in self.keyboard_handlers:
+                keyboard_handler.press(key + 19, 1, False)
+
+    @staticmethod
+    def random_key(mean_key=44):
+        x = random.gauss(mean_key, 10.0)
+        if x < 1: x = 1
+        elif x > 88: x = 88
+        return int(round(x))
+    @staticmethod
+    def random_velocity():
+        x = random.gauss(100.0, 10.0)
+        if x < 1: x = 1
+        elif x > 127: x = 127
+        return int(round(x))
+    @staticmethod
+    def random_duration(self, mean_duration=2.0):
+        x = random.gauss(mean_duration, 2.0)
+        if x < 0.2: x = 0.2
+        return x
+    def random_play(self, num, mean_key, mean_duration):
+        while num != 0:
+            num -= 1
+            key = self.random_key(mean_key)
+            velocity = self.random_velocity()
+            duration = self.random_duration(mean_duration)
+            self.press(key, velocity, duration)
+
+    def play_note(self, channel, note, velocity):
+        print(f"[MIDI Output] ({channel}, {note}, {velocity})")
+        if velocity > 0:
+            self.fs.noteon(channel, note, velocity)
+        else:
+            self.fs.noteoff(channel, note)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
     parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
     args = parser.parse_args()
 
-    midi_out = rtmidi.MidiOut()
-    midi_out.open_virtual_port(args.port_name)
-    print(f"Virtual MIDI port: '{args.port_name}'")
+    midi_out = MidiOutput(args.port_name)
 
     music_info = MusicalInfo()
+
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS['III_iii'])
     dthirds = DiagramOfThirdsElement(music_info)
@@ -152,9 +217,9 @@ def main():
 
     window = MainWindow([box])
 
-    piano_manager = KeyboardManager(piano)
+    piano_manager = KeyboardManager(piano, midi_out)
 
-    lp_manager = LaunchpadManager(lpad)
+    lp_manager = LaunchpadManager(lpad, midi_out)
     lp_manager.start()
 
     Gtk.main()
