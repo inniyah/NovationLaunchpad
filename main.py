@@ -195,6 +195,7 @@ class MidiOutput:
 def main():
     parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
     parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
+    parser.add_argument('-l', '--layout', help="Launchpad Layout", dest='layout', default="III_iii")
     args = parser.parse_args()
 
     midi_out = MidiOutput(args.port_name)
@@ -202,7 +203,7 @@ def main():
     music_info = MusicalInfo()
 
     piano = PianoElement(music_info)
-    lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS['III_iii'])
+    lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
     dthirds = DiagramOfThirdsElement(music_info)
     cfifths = CircleOfFifthsElement(music_info)
     tonalmap = TonalMapElement(music_info)

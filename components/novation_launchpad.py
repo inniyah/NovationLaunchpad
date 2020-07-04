@@ -19,25 +19,30 @@ COLORS_RGB       = [(r / 255., g / 255., b / 255.) for (r, g, b) in COLORS_RGB]
 LAUNCHPAD_COLORS = [(r / 255., g / 255., b / 255.) for (r, g, b) in LAUNCHPAD_COLORS]
 
 LAUNCHPAD_LAYOUTS = {
-    #   (  D )      (  A )      (  E )
-    #   (  F )      [  C ]      (  G )
+    # (    D    ) (    A    ) (    E    )
+    # (    F    ) [    C    ] (    G    )
     # ( G# / Ab ) ( D# / Eb ) ( A# / Bb )
     'VI_V': lambda x, y: (x - 3) * 7 + (y - 3) * 9,
 
-    #   (  A )      (  E )      (  B )
-    #   (  F )      [  C ]      (  G )
+    # (    A    ) (    E    ) (    B    )
+    # (    F    ) [    C    ] (    G    )
     # ( C# / Db ) ( G# / Ab ) ( D# / Eb )
     'III_V': lambda x, y: (x - 3) * 7 + (y - 3) * 4,
 
-    # ( C# / Db )   (  E )      (  G )
-    #   (  A )      [  C ]    ( D# / Eb )
-    #   (  F )    ( G# / Ab )   (  B )
+    # ( C# / Db ) (    E    ) (    G    )
+    # (    A    ) [    C    ] ( D# / Eb )
+    # (    F    ) ( G# / Ab ) (    B    )
     'III_iii': lambda x, y: (x - 3) * 3 + (y - 3) * 4,
 
-    # ( A# / Bb ) ( C# / Db )   (  E )
-    #   (  A )      [  C ]    ( D# / Eb )
-    # ( G# / Ab )   (  B )      (  D )
+    # ( A# / Bb ) ( C# / Db ) (    E    )
+    # (    A    ) [    C    ] ( D# / Eb )
+    # ( G# / Ab ) (    B    ) (    D    )
     'ii_iii': lambda x, y: (x - 2) * 3 + (y - 2) * 1,
+
+    # (    B    ) (    D    ) (    F    )
+    # (    A    ) [    C    ] ( D# / Eb )
+    # (    G    ) ( A# / Bb ) ( C# / Db )
+    'II_iii': lambda x, y: (x - 3) * 3 + (y - 3) * 2,
 }
 
 class LaunchpadManager:
