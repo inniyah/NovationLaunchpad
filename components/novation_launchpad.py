@@ -54,15 +54,14 @@ class LaunchpadManager:
     MODE_MK1 = "Mk1"
 
     def __init__(self, lpbox, midi_out=None):
-        self.midi_out = midi_out
-
         self.mode = None
         self.lp = None
         self.running = False
-        self.thread = Thread(target = self._run, args = (lpbox,))
+        self.thread = Thread(target = self._run, args = (lpbox, midi_out))
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing LaunchpadManager")
+        self.finish()
 
     def setup(self):
         self.mode = None
@@ -107,8 +106,10 @@ class LaunchpadManager:
             print("Did not find any Launchpads, meh...")
 
     def finish(self):
-        self.lp.Reset() # turn all LEDs off
-        self.lp.Close() # close the Launchpad
+        if not self.lp is None:
+            self.lp.Reset() # turn all LEDs off
+            self.lp.Close() # close the Launchpad
+            self.lp = None
 
     def test(self):
         assert( self.mode == self.MODE_MK2)
@@ -147,7 +148,7 @@ class LaunchpadManager:
         print( " - Testing Reset()" )
         self.lp.Reset()
 
-    def _run(self, lpbox):
+    def _run(self, lpbox, midi_out):
         self.setup()
 
         # Clear the buffer because the Launchpad remembers everything :-)
@@ -169,8 +170,8 @@ class LaunchpadManager:
                         note = lpbox.music_info.root_note + lpbox.lp_layout(button_x - 1, button_y - 1)
                         velocity = 127 if but[1] else 0
                         print(f"Launchpad Note: [{button_x}, {button_y}] -> {note} ({lpbox.music_info.note_names[note%12]})")
-                        if self.midi_out:
-                            self.midi_out.play_note(channel, note, velocity)
+                        if midi_out:
+                            midi_out.play_note(channel, note, velocity)
                 if but[1]:
                     i = random.randint(0, 128)
                     self.lp.LedCtrlRawByCode( but[0], i )
