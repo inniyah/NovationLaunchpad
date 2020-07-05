@@ -4,6 +4,7 @@
 import sys
 sys.path.append('..')
 
+import array
 import math
 import time
 import random
@@ -59,6 +60,10 @@ class LaunchpadManager:
         self.running = False
         self.thread = Thread(target = self._run, args = (lpbox, midi_out))
 
+        self.button_colors = array.array('B', [0] * 127) # 'B' = unsigned char (1 byte)
+        self.scale = None
+        self.root_note = None
+
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing LaunchpadManager")
         self.finish()
@@ -106,6 +111,11 @@ class LaunchpadManager:
             print("Did not find any Launchpads, meh...")
 
     def finish(self):
+        self.scale = None
+        self.root_note = None
+        for idx in range(len(self.button_colors)):
+            self.button_colors[idx] = 0
+
         if not self.lp is None:
             self.lp.Reset() # turn all LEDs off
             self.lp.Close() # close the Launchpad
@@ -148,8 +158,36 @@ class LaunchpadManager:
         print( " - Testing Reset()" )
         self.lp.Reset()
 
+    def init_colors(self, lpbox):
+        music_info = lpbox.music_info
+        self.scale = music_info.scale
+        self.root_note = music_info.root_note
+
+        lp_layout = lpbox.lp_layout
+
+        notes_in_scale = music_info.notes_in_scale
+        root_note = music_info.root_note % 12
+        note_names = music_info.note_names
+
+        for y in range(1, 9):
+            for x in range(1, 9):
+                note = root_note + lp_layout(x - 1, y - 1)
+                button_num = x + y*10
+
+                if (note % 12) == root_note:
+                    color = 71
+                elif notes_in_scale[note % 12]:
+                    color = 117
+                else:
+                    color = 0
+
+                self.button_colors[button_num] = color
+                self.lp.LedCtrlRawByCode(button_num, color)
+                lpbox.setCodeColor(button_num, color)
+
     def _run(self, lpbox, midi_out):
         self.setup()
+        self.init_colors(lpbox)
 
         # Clear the buffer because the Launchpad remembers everything :-)
         self.lp.ButtonFlush()
@@ -158,6 +196,9 @@ class LaunchpadManager:
 
         while self.running:
             but = self.lp.ButtonStateRaw()
+
+            if self.root_note != lpbox.music_info.root_note or  self.scale != lpbox.music_info.scale:
+                self.init_colors(lpbox)
 
             if but != []:
                 print( "Button Event: ", but )
@@ -173,14 +214,15 @@ class LaunchpadManager:
                         if midi_out:
                             midi_out.play_note(channel, note, velocity)
                 if but[1]:
-                    i = random.randint(0, 128)
-                    self.lp.LedCtrlRawByCode( but[0], i )
+                    c = random.randint(0, 128)
+                    self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
-                        lpbox.setCodeColor( but[0], i )
+                        lpbox.setCodeColor(but[0], c)
                 else:
-                    self.lp.LedCtrlRawByCode( but[0], 0 )
+                    c = self.button_colors[but[0]]
+                    self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
-                        lpbox.setCodeColor( but[0], 0 )
+                        lpbox.setCodeColor(but[0], c)
             else:
                 time.sleep(0.001 * 5)
 
@@ -251,7 +293,7 @@ class LaunchpadElement(layout.root.LayoutElement):
 
                 #~ label = self.label[button_x + (7 - button_y) * 10]
                 label = note_names[(self.music_info.root_note + self.lp_layout(button_x, 7 - button_y)) % 12]
-                ctx.set_source_rgb(0.1, 0.1, 0.1)
+                ctx.set_source_rgb(0.0 if color[0] >= 0.5 else 1.0, 0.0 if color[1] >= 0.5 else 1.0, 0.0 if color[1] >= 0.5 else 1.0 )
                 ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
                 ctx.set_font_size(min(self.sq_width, self.sq_height) * 0.6)
                 text_extents = ctx.text_extents(str(label))

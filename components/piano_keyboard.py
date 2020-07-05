@@ -127,11 +127,12 @@ class PianoElement(layout.root.LayoutElement):
             ctx.line_to(x2, ypos + white_key_height)
             ctx.line_to(x1, ypos + white_key_height)
             ctx.close_path()
-            ctx.set_source_rgb(*color)
             if (n % 12) == root_note:
                 ctx.set_source_rgb(1.0, 1.0, 0.8)
             elif notes_in_scale[n % 12]:
                 ctx.set_source_rgb(1.0, 1.0, 0.9)
+            else:
+                ctx.set_source_rgb(*color)
             ctx.fill_preserve()
             ctx.set_source_rgb(0.5, 0.5, 0.5)
             ctx.set_line_width(1)
@@ -174,11 +175,12 @@ class PianoElement(layout.root.LayoutElement):
             ctx.line_to(x2, ypos + black_key_height)
             ctx.line_to(x1, ypos + black_key_height)
             ctx.close_path()
-            ctx.set_source_rgb(*color)
             if (n % 12) == root_note:
                 ctx.set_source_rgb(0., 0., 0.5)
             elif notes_in_scale[n % 12]:
                 ctx.set_source_rgb(0., 0., 0.3)
+            else:
+                ctx.set_source_rgb(*color)
             ctx.fill_preserve()
             ctx.set_source_rgb(0.5, 0.5, 0.5)
             ctx.set_line_width(1)

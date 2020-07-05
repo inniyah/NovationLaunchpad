@@ -228,7 +228,7 @@ def main():
     lp_manager = LaunchpadManager(lpad, midi_out)
     lp_manager.start()
 
-    music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
+    #~ music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     Gtk.main()
 
