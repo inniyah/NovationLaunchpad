@@ -22,27 +22,27 @@ LAUNCHPAD_LAYOUTS = {
     # (    D    ) (    A    ) (    E    )
     # (    F    ) [    C    ] (    G    )
     # ( G# / Ab ) ( D# / Eb ) ( A# / Bb )
-    'VI_V': lambda x, y: (x - 3) * 7 + (y - 3) * 9,
+    'VI_V': lambda x, y: (y - 3) * 9 + (x - 3) * 7,
 
     # (    A    ) (    E    ) (    B    )
     # (    F    ) [    C    ] (    G    )
     # ( C# / Db ) ( G# / Ab ) ( D# / Eb )
-    'III_V': lambda x, y: (x - 3) * 7 + (y - 3) * 4,
+    'III_V': lambda x, y: (y - 3) * 4 + (x - 3) * 7,
 
     # ( C# / Db ) (    E    ) (    G    )
     # (    A    ) [    C    ] ( D# / Eb )
     # (    F    ) ( G# / Ab ) (    B    )
-    'III_iii': lambda x, y: (x - 3) * 3 + (y - 3) * 4,
+    'III_iii': lambda x, y: (y - 3) * 4 + (x - 3) * 3,
 
     # ( A# / Bb ) ( C# / Db ) (    E    )
     # (    A    ) [    C    ] ( D# / Eb )
     # ( G# / Ab ) (    B    ) (    D    )
-    'ii_iii': lambda x, y: (x - 2) * 3 + (y - 2) * 1,
+    'ii_iii': lambda x, y: (y - 2) * 1 + (x - 2) * 3,
 
     # (    B    ) (    D    ) (    F    )
     # (    A    ) [    C    ] ( D# / Eb )
     # (    G    ) ( A# / Bb ) ( C# / Db )
-    'II_iii': lambda x, y: (x - 3) * 3 + (y - 3) * 2,
+    'II_iii': lambda x, y: (y - 3) * 2 + (x - 3) * 3,
 }
 
 class LaunchpadManager:
@@ -60,6 +60,9 @@ class LaunchpadManager:
         self.lp = None
         self.running = False
         self.thread = Thread(target = self._run, args = (lpbox,))
+
+    def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+        print("~ Closing LaunchpadManager")
 
     def setup(self):
         self.mode = None
@@ -158,6 +161,16 @@ class LaunchpadManager:
             if but != []:
                 print( "Button Event: ", but )
                 #self.lp.LedCtrlRaw( random.randint(0,127), random.randint(0,63), random.randint(0,63), random.randint(0,63) )
+                if but[0] < 100:
+                    button_x = but[0] % 10
+                    button_y = but[0] // 10
+                    if button_x <= 8 and button_y <= 8:
+                        channel = 1
+                        note = lpbox.music_info.root_note + lpbox.lp_layout(button_x - 1, button_y - 1)
+                        velocity = 127 if but[1] else 0
+                        print(f"Launchpad Note: [{button_x}, {button_y}] -> {note} ({lpbox.music_info.note_names[note%12]})")
+                        if self.midi_out:
+                            self.midi_out.play_note(channel, note, velocity)
                 if but[1]:
                     i = random.randint(0, 128)
                     self.lp.LedCtrlRawByCode( but[0], i )
@@ -180,7 +193,6 @@ class LaunchpadManager:
         self.running = False
         if self.thread:
             self.thread.join()
-
 
 class LaunchpadElement(layout.root.LayoutElement):
     def __init__(self, music_info, lp_layout):

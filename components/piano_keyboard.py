@@ -53,10 +53,7 @@ class KeyboardManager:
         self.midi_in.set_callback(self.midi_received)
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
-        #~ self.fs.delete()
-        #~ eprint("FluidSynth Closed")
-        #~ del self.fs
-        pass
+        print("~ Closing KeyboardManager")
 
     def midi_received(self, midi_event, data=None):
         current_timestamp = time.time_ns() / (10 ** 9) # Converted to floating-point seconds

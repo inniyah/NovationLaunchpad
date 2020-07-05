@@ -212,7 +212,7 @@ class MusicalInfo():
         self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 60)
         self.note_names = self.NOTE_NAMES
 
-    def set_root(self, scale, note):
+    def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
-        self.root_note = note % 12
+        self.root_note = note
         self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]

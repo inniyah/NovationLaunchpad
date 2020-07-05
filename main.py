@@ -144,6 +144,7 @@ class MidiOutput:
             self.fs.program_select(channel, self.sfid, 0, 0)
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+        print("~ Closing MidiOutput")
         self.fs.delete()
         print("~ FluidSynth Closed")
         del self.fs
@@ -201,6 +202,7 @@ def main():
     midi_out = MidiOutput(args.port_name)
 
     music_info = MusicalInfo()
+    music_info.set_root(60)
 
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
