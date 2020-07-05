@@ -204,7 +204,6 @@ def main():
     args = parser.parse_args()
 
     music_info = MusicalInfo()
-    music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
@@ -222,12 +221,14 @@ def main():
 
     window = MainWindow([box])
 
-    midi_out = MidiOutput(args.port_name, [cfifths])
+    midi_out = MidiOutput(args.port_name, [cfifths, tonalmap])
 
     piano_manager = KeyboardManager(piano, midi_out)
 
     lp_manager = LaunchpadManager(lpad, midi_out)
     lp_manager.start()
+
+    music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     Gtk.main()
 

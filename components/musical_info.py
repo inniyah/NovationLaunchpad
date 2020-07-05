@@ -209,7 +209,7 @@ class MusicalInfo():
     NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 
     def __init__(self):
-        self.set_root(MusicDefs.SCALE_DIATONIC_MAJOR, 60)
+        self.set_root(60, MusicDefs.SCALE_DIATONIC_MAJOR)
         self.note_names = self.NOTE_NAMES
 
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):

@@ -104,6 +104,7 @@ class PianoElement(layout.root.LayoutElement):
         black_key_width = white_key_width * 7. / 12.
         black_key_height = white_key_height * .6
 
+        notes_in_scale = self.music_info.notes_in_scale
         root_note = self.music_info.root_note % 12
         note_names = self.music_info.note_names
 
@@ -129,6 +130,8 @@ class PianoElement(layout.root.LayoutElement):
             ctx.set_source_rgb(*color)
             if (n % 12) == root_note:
                 ctx.set_source_rgb(1.0, 1.0, 0.8)
+            elif notes_in_scale[n % 12]:
+                ctx.set_source_rgb(1.0, 1.0, 0.9)
             ctx.fill_preserve()
             ctx.set_source_rgb(0.5, 0.5, 0.5)
             ctx.set_line_width(1)
@@ -174,6 +177,8 @@ class PianoElement(layout.root.LayoutElement):
             ctx.set_source_rgb(*color)
             if (n % 12) == root_note:
                 ctx.set_source_rgb(0., 0., 0.5)
+            elif notes_in_scale[n % 12]:
+                ctx.set_source_rgb(0., 0., 0.3)
             ctx.fill_preserve()
             ctx.set_source_rgb(0.5, 0.5, 0.5)
             ctx.set_line_width(1)
