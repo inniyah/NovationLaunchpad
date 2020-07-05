@@ -21,6 +21,8 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         width = 230 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
+        self.keys_pressed = [0] * 12
+
     def get_minimum_size(self, ctx):
         return self.size
 
@@ -84,7 +86,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
                     #~ ctx.stroke()
 
         for n in range(12):
-            is_pressed = False
+            is_pressed = self.keys_pressed[n]
 
             if notes_in_scale[n % 12]:
                 note_radius = 15
@@ -124,3 +126,11 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
             ctx.show_text(str(label))
 
         #~ ctx.restore()
+
+
+    def playNote(self, channel, note, velocity):
+        note_class = note % 12
+        if velocity:
+            self.keys_pressed[note_class] |= (1<<channel)
+        else:
+            self.keys_pressed[note_class] &= ~(1<<channel)

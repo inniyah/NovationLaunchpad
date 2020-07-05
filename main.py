@@ -129,7 +129,7 @@ class MainWindow(Gtk.Window):
         self.queue_draw()
 
 class MidiOutput:
-    def __init__(self, port_name):
+    def __init__(self, port_name, elements):
         self.port_name = port_name
         self.midi_out = rtmidi.MidiOut()
         self.midi_out.open_virtual_port(self.port_name)
@@ -142,6 +142,8 @@ class MidiOutput:
         self.sfid = self.fs.sfload("/usr/share/sounds/sf2/FluidR3_GM.sf2")
         for channel in range(0, 16):
             self.fs.program_select(channel, self.sfid, 0, 0)
+
+        self.elements = elements
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing MidiOutput")
@@ -192,6 +194,8 @@ class MidiOutput:
         else:
             self.fs.noteoff(channel, note)
 
+        for element in self.elements:
+            element.playNote(channel, note, velocity)
 
 def main():
     parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
@@ -199,10 +203,8 @@ def main():
     parser.add_argument('-l', '--layout', help="Launchpad Layout", dest='layout', default="III_iii")
     args = parser.parse_args()
 
-    midi_out = MidiOutput(args.port_name)
-
     music_info = MusicalInfo()
-    music_info.set_root(60)
+    music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
@@ -219,6 +221,8 @@ def main():
     box.margin = 1
 
     window = MainWindow([box])
+
+    midi_out = MidiOutput(args.port_name, [cfifths])
 
     piano_manager = KeyboardManager(piano, midi_out)
 
