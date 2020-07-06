@@ -23,8 +23,11 @@ class TonalMapElement(layout.root.LayoutElement):
         self.step_size = 10
         self.border_gap = 10.
 
-        height = 350 + self.border_gap * 2
-        width = 350 + self.border_gap * 2
+        self.half_w = 350 // 2
+        self.half_h = 350 // 2
+
+        height = self.half_h * 2 + self.border_gap * 2
+        width = self.half_w * 2 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
         max_octaves = 10
@@ -37,7 +40,7 @@ class TonalMapElement(layout.root.LayoutElement):
         x_base = -3 * diff_n
         y_base = 4 * diff_n
         d_base = 7 * diff_n
-        k = math.ceil((d_base - 12) / 24)
+        k = math.ceil(10000 + (d_base - 12) / 24) - 10000
         x = x_base + 12 * k
         y = y_base - 12 * k
         d = y - x
@@ -58,21 +61,33 @@ class TonalMapElement(layout.root.LayoutElement):
         freq_base = 440.00
         midi_base = 69
 
+        ang = -math.pi/4
+        scale = 7
+        cang = scale * math.cos(ang)
+        sang = scale * math.sin(ang)
+
         q = queue.Queue()
 
-        scale = 7
         for semitone in range(6 * 12):
             diff_n = semitone - 12 * 3 + 1
             note = central_note + diff_n
             name = self.music_info.note_names[note % 12]
-            x, y = self.getNotePosition(diff_n)
-            q.put((note, name, cx + x * scale, cy - y * scale))
+            px, py = self.getNotePosition(diff_n)
+            q.put((note, name, px, -py))
+
+        ixy_list = [
+            (0, 0),
+            (cang * 12 + sang * 12, cang * 12 - sang * 12),
+            (-cang * 12 - sang * 12, -cang * 12 + sang * 12),
+        ]
 
         ctx.save()
         while not q.empty():
-            note, name, x, y = q.get()
+            note, name, px, py = q.get()
 
-            ctx.move_to(x, y)
+            x = cx + cang * px + sang * py
+            y = cy + cang * py - sang * px
+
             if self.keys_pressed[note]:
                 color = get_color_from_note(note % 12, 1.)
                 ctx.set_line_width(5)
@@ -83,18 +98,28 @@ class TonalMapElement(layout.root.LayoutElement):
                 else:
                     ctx.set_line_width(1)
             ctx.set_source_rgb(0.2, 0.2, 0.2)
-            ctx.arc(x, y, 9, 0, 2. * math.pi)
-            ctx.stroke_preserve()
-            ctx.set_source_rgb(*color)
-            ctx.fill()
-            
+
             label = f"{name}"
-            ctx.set_source_rgb(0.0, 0.0, 0.0)
             ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
             ctx.set_font_size(8)
             text_extents = ctx.text_extents(str(label))
-            ctx.move_to(x - text_extents.width / 2., y + text_extents.height / 2.)
-            ctx.show_text(str(label))
+
+            for ix, iy in ixy_list:
+                xx = x + ix
+                if xx < cx - self.half_w or xx > cx + self.half_w: continue
+
+                yy = y + iy
+                if yy < cy - self.half_h or yy > cy + self.half_h: continue
+
+                ctx.move_to(xx, yy)
+                ctx.arc(xx, yy, 9, 0, 2. * math.pi)
+                ctx.stroke_preserve()
+                ctx.set_source_rgb(*color)
+                ctx.fill()
+
+                ctx.set_source_rgb(0.0, 0.0, 0.0)
+                ctx.move_to(xx - text_extents.width / 2., yy + text_extents.height / 2.)
+                ctx.show_text(str(label))
 
         ctx.restore()
 
