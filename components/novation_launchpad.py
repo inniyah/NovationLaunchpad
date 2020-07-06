@@ -212,6 +212,8 @@ class LaunchpadManager:
             if but != []:
                 print( "Button Event: ", but )
                 #self.lp.LedCtrlRaw( random.randint(0,127), random.randint(0,63), random.randint(0,63), random.randint(0,63) )
+                #~ c = random.randint(0, 128)
+                c = 3
                 if but[0] < 100:
                     button_x = but[0] % 10
                     button_y = but[0] // 10
@@ -220,11 +222,10 @@ class LaunchpadManager:
                         note = lpbox.music_info.root_note + lpbox.lp_layout(button_x - 1, button_y - 1)
                         velocity = 127 if but[1] else 0
                         print(f"Launchpad Note: [{button_x}, {button_y}] -> {note} ({lpbox.music_info.note_names[note%12]})")
+                        c = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12] - 2
                         if midi_out:
                             midi_out.play_note(channel, note, velocity)
                 if but[1]:
-                    #~ c = random.randint(0, 128)
-                    c = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12] - 2
                     self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
                         lpbox.setCodeColor(but[0], c)
