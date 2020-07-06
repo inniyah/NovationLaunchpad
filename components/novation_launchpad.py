@@ -54,6 +54,8 @@ class LaunchpadManager:
     MODE_DICER = "Dcr"
     MODE_MK1 = "Mk1"
 
+    COLOR_CODES_FOR_NOTES = [ 7, 11, 15, 19, 27, 31, 35, 39, 47, 51, 55, 59]
+
     def __init__(self, lpbox, midi_out=None):
         self.mode = None
         self.lp = None
@@ -172,18 +174,25 @@ class LaunchpadManager:
         for y in range(1, 9):
             for x in range(1, 9):
                 note = root_note + lp_layout(x - 1, y - 1)
-                button_num = x + y*10
+                button_num = x + y * 10
 
                 if (note % 12) == root_note:
-                    color = 71
+                    color_code = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12] - 1
                 elif notes_in_scale[note % 12]:
-                    color = 117
+                    color_code = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12]
                 else:
-                    color = 0
+                    color_code = 0
 
-                self.button_colors[button_num] = color
-                self.lp.LedCtrlRawByCode(button_num, color)
-                lpbox.setCodeColor(button_num, color)
+                #~ if (note % 12) == root_note:
+                    #~ color = 15
+                #~ elif notes_in_scale[note % 12]:
+                    #~ color = notes_color_code[note % 12]
+                #~ else:
+                    #~ color = 0
+
+                self.button_colors[button_num] = color_code
+                self.lp.LedCtrlRawByCode(button_num, color_code)
+                lpbox.setCodeColor(button_num, color_code)
 
     def _run(self, lpbox, midi_out):
         self.setup()
@@ -214,7 +223,8 @@ class LaunchpadManager:
                         if midi_out:
                             midi_out.play_note(channel, note, velocity)
                 if but[1]:
-                    c = random.randint(0, 128)
+                    #~ c = random.randint(0, 128)
+                    c = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12] - 2
                     self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
                         lpbox.setCodeColor(but[0], c)
