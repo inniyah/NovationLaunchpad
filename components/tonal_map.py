@@ -30,9 +30,6 @@ class TonalMapElement(layout.root.LayoutElement):
         width = self.half_w * 2 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
-        max_octaves = 10
-        self.keys_pressed = [0] * (12 * max_octaves)
-
     def get_minimum_size(self, ctx):
         return self.size
 
@@ -121,7 +118,7 @@ class TonalMapElement(layout.root.LayoutElement):
             x = cx + cang * px + sang * py
             y = cy + cang * py - sang * px
 
-            if self.keys_pressed[note]:
+            if self.music_info.keys_pressed[note]:
                 color = get_color_from_note(note % 12, 1.)
                 ctx.set_line_width(5)
             else:
@@ -153,9 +150,3 @@ class TonalMapElement(layout.root.LayoutElement):
                     ctx.show_text(str(label))
 
         ctx.restore()
-
-    def playNote(self, channel, note, velocity):
-        if velocity:
-            self.keys_pressed[note] |= (1<<channel)
-        else:
-            self.keys_pressed[note] &= ~(1<<channel)

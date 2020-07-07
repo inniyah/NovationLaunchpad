@@ -214,14 +214,15 @@ def main():
     box = layout.BoxLM()
     box.left = lpad
     box.top = piano
-    box.center = tonalmap #dthirds
+    #~ box.center = tonalmap
+    box.center = dthirds
     box.bottom = DummyElement(50, 10)
     box.right = cfifths
     box.margin = 1
 
     window = MainWindow([box])
 
-    midi_out = MidiOutput(args.port_name, [cfifths, tonalmap])
+    midi_out = MidiOutput(args.port_name, [music_info, cfifths])
 
     piano_manager = KeyboardManager(piano, midi_out)
 

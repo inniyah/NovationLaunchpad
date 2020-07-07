@@ -79,6 +79,8 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             y_step_height = effective_h / 23.
             y = base_y - y_step_height * y_steps
 
+            key_pressed = self.music_info.keys_pressed[n]
+
             if notes_in_scale[n % 12]:
                 r = note_radius
             else:
@@ -97,6 +99,10 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
                 note_color = get_color_from_note(n, .1)
                 note_border = 1.0
 
+            if key_pressed:
+                r = note_radius * 1.5
+                note_border = 5.0
+
             ctx.set_source_rgb(*note_color)
             ctx.arc(x, y, r, 0, 2. * math.pi)
             ctx.set_line_width(1.0)
@@ -105,7 +111,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             ctx.set_line_width(note_border)
             ctx.stroke()
 
-            if (n % 12 == self.music_info.root_note):
+            if (n % 12 == self.music_info.root_note % 12):
                 ctx.set_source_rgb(0., 0., 0.)
                 ctx.arc(x, y, r + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)
