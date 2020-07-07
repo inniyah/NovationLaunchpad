@@ -222,7 +222,7 @@ def main():
 
     window = MainWindow([box])
 
-    midi_out = MidiOutput(args.port_name, [music_info, cfifths])
+    midi_out = MidiOutput(args.port_name, [music_info])
 
     piano_manager = KeyboardManager(piano, midi_out)
 

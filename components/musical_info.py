@@ -215,6 +215,8 @@ class MusicalInfo():
         max_octaves = 10
         self.keys_pressed = [0] * (12 * max_octaves)
 
+        self.note_classes = [0] * 12
+
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
         self.root_note = note
@@ -223,5 +225,7 @@ class MusicalInfo():
     def playNote(self, channel, note, velocity):
         if velocity:
             self.keys_pressed[note] |= (1<<channel)
+            self.note_classes[note % 12] += 1
         else:
             self.keys_pressed[note] &= ~(1<<channel)
+            self.note_classes[note % 12] -= 1
