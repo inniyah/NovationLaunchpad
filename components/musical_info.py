@@ -204,9 +204,136 @@ class MusicDefs:
     ENARMONIC_NOTE_NAMES = [ 'C',     'Db/C#','D',     'Eb/D#', 'E',     'F',     'Gb/F#', 'G',     'Ab/G#', 'A',     'Bb/A#', 'B'  ]
     INTERVAL_NAMES =       [ 'I',     'ii',   'II',      'iii', 'III',   'IV',    'v',     'V',     'vi',    'VI',    'vii',   'VII' ]
 
+
+# Hue: angle in degrees (0-360)
+# Saturation: fraction between 0 and 1
+# Value: fraction between 0 and 1
+
+def hsv_to_rgb(hue, saturation=1., value=1.):
+    h = float(hue)
+    s = float(saturation)
+    v = float(value)
+    h60 = h / 60.0
+    h60f = math.floor(h60)
+    hi = int(h60f) % 6
+    f = h60 - h60f
+    p = v * (1 - s)
+    q = v * (1 - f * s)
+    t = v * (1 - (1 - f) * s)
+    r, g, b = 0, 0, 0
+    if   hi == 0: r, g, b = v, t, p
+    elif hi == 1: r, g, b = q, v, p
+    elif hi == 2: r, g, b = p, v, t
+    elif hi == 3: r, g, b = p, q, v
+    elif hi == 4: r, g, b = t, p, v
+    elif hi == 5: r, g, b = v, p, q
+    return r, g, b
+
+# Red: fraction between 0 and 1
+# Green: fraction between 0 and 1
+# Blue: fraction between 0 and 1
+
+def rgb_to_hsv(r, g, b):
+    mx = max(r, g, b)
+    mn = min(r, g, b)
+    df = mx - mn
+    if   mx == mn: h = 0
+    elif mx == r:  h = (60 * ((g-b)/df) + 360) % 360
+    elif mx == g:  h = (60 * ((b-r)/df) + 120) % 360
+    elif mx == b:  h = (60 * ((r-g)/df) + 240) % 360
+    if mx == 0:
+        s = 0
+    else:
+        s = (df/mx) * 100
+    v = mx * 100
+    return h, s, v
+
+def lab_to_rgb(l, a, b):
+    y = (l + 16.) / 116.
+    x = a / 500. + y
+    z = y - b / 200.
+
+    x = 0.95047 * ((x * x * x) if (x * x * x > 0.008856) else ((x - 16./116.) / 7.787))
+    y = 1.00000 * ((y * y * y) if (y * y * y > 0.008856) else ((y - 16./116.) / 7.787))
+    z = 1.08883 * ((z * z * z) if (z * z * z > 0.008856) else ((z - 16./116.) / 7.787))
+
+    r = x *  3.2406 + y * -1.5372 + z * -0.4986
+    g = x * -0.9689 + y *  1.8758 + z *  0.0415
+    b = x *  0.0557 + y * -0.2040 + z *  1.0570
+
+    r = (1.055 * (r**(1./2.4)) - 0.055) if (r > 0.0031308) else (12.92 * r)
+    g = (1.055 * (g**(1./2.4)) - 0.055) if (g > 0.0031308) else (12.92 * g)
+    b = (1.055 * (b**(1./2.4)) - 0.055) if (b > 0.0031308) else (12.92 * b)
+
+    return [ max(0., min(1., r)), max(0., min(1., g)), max(0., min(1., b)) ]
+
+def rgb_to_lab(r, g, b):
+    r = ((r + 0.055) / 1.055)**2.4 if (r > 0.04045) else (r / 12.92);
+    g = ((g + 0.055) / 1.055)**2.4 if (g > 0.04045) else (g / 12.92);
+    b = ((b + 0.055) / 1.055)**2.4 if (b > 0.04045) else (b / 12.92);
+
+    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+    y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
+    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+
+    x = x**(1./3.) if (x > 0.008856) else (7.787 * x) + 16/116.0;
+    y = y**(1./3.) if (y > 0.008856) else (7.787 * y) + 16/116.0;
+    z = z**(1./3.) if (z > 0.008856) else (7.787 * z) + 16/116.0;
+
+    return [(116. * y) - 16., 500. * (x - y), 200. * (y - z)]
+
+
 class MusicalInfo():
     #NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+
+    CHORDS_INFO = [
+        [
+            # Nineth chords
+            [ [], [0, 4, 7, 11, 14], "Major 9th Chord" ],
+            [ [], [0, 4, 7, 10, 14], "Dominant 9th Chord" ],
+            [ [], [0, 3, 7, 10, 14], "Minor 9th Chord" ],
+
+            [ [], [0, 4, 7, 10, 15], "Major 7#9 Chord" ],
+            [ [], [0, 4, 7, 10, 13], "Major 7b9 Chord" ],
+            [ [], [0, 4, 7, 14],     "Major add9 Chord" ],
+            [ [], [0, 3, 7, 14],     "Minor m(add9) Chord" ],
+
+            # Tertian seventh chords: constructed using a sequence of major thirds and/or minor thirds
+            [ [], [0, 4, 7, 11], "Major 7th Chord" ],
+            [ [], [0, 3, 7, 10], "Minor 7th Chord" ],
+            [ [], [0, 4, 7, 10], "Dominant 7th Chord" ],
+            [ [], [0, 3, 6,  9], "Diminished 7th Chord" ],
+            [ [], [0, 3, 6, 10], "Half-diminished 7th Chord" ],
+            [ [], [0, 3, 7, 11], "Minor major 7th Chord" ],
+            [ [], [0, 4, 8, 11], "Augmented major 7th Chord" ],
+        ],
+        [
+            # Primary triads
+            [ [], [0, 4, 7],  "Major Triad" ],
+            [ [], [0, 3, 7],  "Minor Triad" ],
+            [ [], [0, 3, 6],  "Diminished Triad" ],
+            [ [], [0, 4, 8],  "Augmented Triad" ],
+        ],
+        [
+            # Suspended triads
+            [ [], [0, 2, 7],  "Sus2 Triad" ],
+            [ [], [0, 5, 7],  "Sus4 Triad" ],
+
+            [ [], [0, 7, 9],  "6Sus Triad" ],
+            [ [], [0, 7, 10], "7Sus Triad" ],
+        ],
+    ]
+
+    for chords_list in CHORDS_INFO:
+        for chord_info in chords_list:
+            if not chord_info[0]:
+                chord_info[0] = [0] * 12
+                for i in range(0, 12):
+                    chord_mask = 0
+                    for num_note in chord_info[1]:
+                        chord_mask |= 1 << (i + num_note) % 12
+                    chord_info[0][i] = chord_mask
 
     def __init__(self):
         self.set_root(60, MusicDefs.SCALE_DIATONIC_MAJOR)
@@ -215,7 +342,9 @@ class MusicalInfo():
         max_octaves = 10
         self.keys_pressed = [0] * (12 * max_octaves)
 
-        self.note_classes = [0] * 12
+        self.pitch_classes = [0] * 12
+        self.chord = 0
+        self.chord_color = None
 
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
@@ -223,9 +352,115 @@ class MusicalInfo():
         self.notes_in_scale = [(self.scale & 1<<((r - self.root_note) % 12) != 0) for r in range(12)]
 
     def playNote(self, channel, note, velocity):
+        pitch_class = note % 12
+        chord = self.chord
         if velocity:
             self.keys_pressed[note] |= (1<<channel)
-            self.note_classes[note % 12] += 1
+            self.pitch_classes[pitch_class] += 1
+            if self.pitch_classes[pitch_class]: chord |= 1<<(pitch_class)
         else:
             self.keys_pressed[note] &= ~(1<<channel)
-            self.note_classes[note % 12] -= 1
+            self.pitch_classes[pitch_class] -= 1
+            if not self.pitch_classes[pitch_class]: chord &= ~(1<<(pitch_class))
+
+        if chord != self.chord:
+            print(f"Pitch class histogram: {chord:#06x} = {chord:>012b}")
+            self.chord_color = None
+            self.chord = chord
+
+    def getChordColor(self):
+        if self.chord_color is None:
+            chords_found = self._find_chords()
+            if chords_found:
+                self.chord_color = self._get_chord_color(chords_found[0][3])
+                print(f"{chords_found} -> {self.chord_color}")
+            else:
+                self.chord_color = self._get_chord_color([])
+        return self.chord_color
+
+    def _get_chord_color(self, chord_intervals):
+        if not chord_intervals:
+            return lab_to_rgb(75., 0., 0.)
+
+        axis_lr = (sum(chord_intervals) / len(chord_intervals) - 11./3) / 13.5
+
+        vdif = [(((c * 7) % 12) - c / 7.) * 7. / 24. for c in chord_intervals]
+        axis_ud = sum(vdif) / len(vdif) * 3. / 5.
+
+        nmaj = [(1. / (n + 1) if (j - i) == 4 else 0.) for n, (i, j) in enumerate(zip(chord_intervals[:-1], chord_intervals[1:]))]
+        nmin = [(1. / (n + 1) if (j - i) == 3 else 0.) for n, (i, j) in enumerate(zip(chord_intervals[:-1], chord_intervals[1:]))]
+        axis_mm = 5. * (sum(nmaj) - sum(nmin) ) / len(chord_intervals)
+
+        chord_color = lab_to_rgb(75., (3 * axis_mm + axis_ud) * -20., axis_lr * 80.)
+        print(f"Chord Color: intervals = {chord_intervals}, nmaj = {nmaj}, nmin = {nmin}, axis_mm = {axis_mm}, axis_ud = {axis_ud}, axis_lr = {axis_lr} -> {chord_color}")
+        return chord_color
+
+    def _check_chord(self, chord, note=(0,0,0)):
+        base_note, base_x, base_y = note
+        notes_in_scale = True
+        for inc_note, inc_x, inc_y in chord:
+            note_value = (base_note + self.get_note_from_coords(base_x + inc_x, base_y + inc_y) % 12)
+            if not self.notes_in_scale[note_value]:
+                notes_in_scale = False
+            #print(f"{inc_note}, {inc_x}, {inc_y}: {note_value} -> {self.notes_in_scale[note_value]}")
+        return notes_in_scale
+
+    def _combine_chords(self, chords):
+        if not chords:
+            return chords
+
+        combined_chords = []
+
+        #for chord_signature, chord_root, chord_name, chord_intervals in chords:
+        #    print(f"<<< Individual: {chord_signature:03x} ~ {chord_signature:012b}: {chord_root} {chord_name} {chord_intervals}")
+
+        while chords:
+            combined_signature, combined_root, combined_name, combined_intervals = chords.pop(0)
+            print(f"Starting: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {combined_intervals}")
+            combined_intervals = set(combined_intervals)
+            pending_chords = []
+            while chords:
+                if (combined_signature & chords[0][0]) == chords[0][0]:
+                    print(f"Discarding: {chords[0][0]:03x} ~ {chords[0][0]:012b}: {chords[0][1]} {chords[0][2]} {chords[0][3]}")
+                    chords.pop(0)
+                elif (combined_signature & chords[0][0]) != 0:
+                    chord_signature, chord_root, chord_name, chord_intervals = chords.pop(0)
+                    print(f"Combining: {chord_signature:03x} ~ {chord_signature:012b}: {chord_root} {chord_name} {chord_intervals}")
+                    combined_signature |= chord_signature
+                    combined_intervals |= set([i + ((chord_root - combined_root) % 12) for i in chord_intervals])
+                    combined_name += f" + {chord_name} on {chord_root}"
+                else:
+                    pending_chords.append(chords.pop(0))
+            combined_chords.append((combined_signature, combined_root, combined_name, sorted(combined_intervals)))
+            print(f"Final: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {sorted(combined_intervals)}")
+            chords = pending_chords
+
+        for combined_signature, combined_root, combined_name, combined_intervals in combined_chords:
+            print(f" >>> Combined: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {combined_intervals}")
+        return combined_chords
+
+    def _find_chords(self):
+        chords_found = []
+
+        #pitch_classes = 0
+        #for num_note in range(0, 12):
+        #    value = 1 << (num_note % 12)
+        #    if self.pitch_classes_active[num_note] > 0:
+        #        pitch_classes |= value
+
+        pitch_classes = self.chord
+        comp_chord_signature = 0
+
+        for chords_list in self.CHORDS_INFO:
+            for n in range(12):
+                for chord_signatures, chord_intervals, chord_name in chords_list:
+                    note = (self.root_note + n * 7) % 12
+                    chord_signature = chord_signatures[note]
+                    if (pitch_classes & chord_signature) == chord_signature:
+                        chords_found.append((chord_signature, note % 12, chord_name, chord_intervals))
+                        #print("Found: {} on {} ({:012b} - {:012b} -> {:012b})".format(chord_name, self.note_names[note % 12],
+                        #    pitch_classes, chord_signature, pitch_classes & ~chord_signature))
+                        comp_chord_signature |= chord_signature
+                        #pitch_classes &= ~chord_signature
+
+        return self._combine_chords(chords_found)

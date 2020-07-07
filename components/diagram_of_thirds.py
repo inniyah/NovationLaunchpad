@@ -35,23 +35,64 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
         notes_in_scale = self.music_info.notes_in_scale
+        pitch_classes = self.music_info.pitch_classes
+        chord_color = self.music_info.getChordColor()
 
         note_radius = 12
         base_y = ypos + height - self.border_gap - note_radius
         effective_h = (height - 2. * self.border_gap - 2. * note_radius)
 
+        ctx.save()
+
+        ctx.rectangle(xpos, ypos, width, height)
+        ctx.clip()
+
         for i in range(self.num_notes):
             n = self.first_note + i
             x = xpos + self.border_gap + self.step_size * (i + 1)
-
-            y_steps = ((n * 7 + self.central_voffset) % 24)
-            y_step_height = effective_h / 23.
-            y = base_y - y_step_height * y_steps
 
             ctx.set_source_rgb(0.9, 0.9, 0.9)
             ctx.move_to(x, ypos + self.border_gap)
             ctx.line_to(x, ypos + height - self.border_gap)
             ctx.stroke()
+
+        ctx.save()
+        y_step_height = effective_h / 23.
+        for i in range(-7, self.num_notes):
+            n = self.first_note + i
+            x = xpos + self.border_gap + self.step_size * (i + 1)
+
+            y_steps = ((n * 7 + self.central_voffset) % 24)
+            y = base_y - y_step_height * y_steps
+
+            ctx.set_line_width(note_radius * 4.2)
+            ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+
+            if pitch_classes[n % 12]:
+                ctx.set_source_rgb(*chord_color)
+                ctx.move_to(x, y)
+                ctx.line_to(x, y)
+                for ix, iy in [(3, 3), (4, -4), (7, -1)]:
+                    if pitch_classes[(n + ix) % 12]:
+                        ctx.move_to(x, y)
+                        ctx.line_to(x + ix * self.step_size, y + iy * y_step_height)
+                if y_steps > 20 and pitch_classes[(n - 3) % 12]:
+                    ctx.move_to(x, y)
+                    ctx.line_to(x - 3. * self.step_size, y - 3. * y_step_height)
+                if y_steps < 5 and pitch_classes[(n - 4) % 12]:
+                    ctx.move_to(x, y)
+                    ctx.line_to(x - 4. * self.step_size, y + 4. * y_step_height)
+
+                ctx.stroke()
+        ctx.restore()
+
+        y_step_height = effective_h / 23.
+        for i in range(self.num_notes):
+            n = self.first_note + i
+            x = xpos + self.border_gap + self.step_size * (i + 1)
+
+            y_steps = ((n * 7 + self.central_voffset) % 24)
+            y = base_y - y_step_height * y_steps
 
             if i >= 4 and y_steps >= 4:
                 if notes_in_scale[n % 12] and notes_in_scale[(n + 8) % 12]:
@@ -71,12 +112,12 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
                 ctx.line_to(x + 3. * self.step_size, y + 3. * y_step_height)
                 ctx.stroke()
 
+        y_step_height = effective_h / 23.
         for i in range(self.num_notes):
             n = self.first_note + i
             x = xpos + self.border_gap + self.step_size * (i + 1)
 
             y_steps = ((n * 7 + self.central_voffset) % 24)
-            y_step_height = effective_h / 23.
             y = base_y - y_step_height * y_steps
 
             key_pressed = self.music_info.keys_pressed[n]
@@ -124,3 +165,5 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             text_extents = ctx.text_extents(str(label))
             ctx.move_to(x - text_extents.width / 2., y + text_extents.height / 2.)
             ctx.show_text(str(label))
+
+        ctx.restore()
