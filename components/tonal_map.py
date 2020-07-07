@@ -61,7 +61,7 @@ class TonalMapElement(layout.root.LayoutElement):
         freq_base = 440.00
         midi_base = 69
 
-        ang = -math.pi/4
+        ang = 0#-math.pi/4
         scale = 7
         cang = scale * math.cos(ang)
         sang = scale * math.sin(ang)
@@ -75,13 +75,46 @@ class TonalMapElement(layout.root.LayoutElement):
             px, py = self.getNotePosition(diff_n)
             q.put((note, name, px, -py))
 
+        equitonal_dx = cang * 12 - sang * 12
+        equitonal_dy = cang * 12 + sang * 12
+
         ixy_list = [
             (0, 0),
-            (cang * 12 + sang * 12, cang * 12 - sang * 12),
-            (-cang * 12 - sang * 12, -cang * 12 + sang * 12),
+            (equitonal_dy, equitonal_dx),
+            (-equitonal_dy, -equitonal_dx),
         ]
 
         ctx.save()
+
+        ctx.rectangle(xpos, ypos, width, height)
+        ctx.clip()
+
+        ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        ctx.set_font_size(8)
+
+        n = self.half_h / equitonal_dy
+        m = self.half_w / equitonal_dx
+        if width / equitonal_dx < height / equitonal_dy:
+            n, m = m, n
+
+        ctx.set_line_width(0.5)
+        ctx.set_source_rgb(0.8, 0.8, 0.8)
+        for i in range(-12 * 3, 12 * 3 + 1):
+            ctx.move_to(cx + equitonal_dx * i / 24 + equitonal_dy * 1.6,
+                        cy - equitonal_dy * i / 24 + equitonal_dx * 1.6)
+            ctx.line_to(cx + equitonal_dx * i / 24 - equitonal_dy * 1.6,
+                        cy - equitonal_dy * i / 24 - equitonal_dx * 1.6)
+            ctx.stroke()
+
+        ctx.set_line_width(0.5)
+        ctx.set_source_rgb(0.2, 0.2, 0.2)
+        for i in range(-1, 2):
+            ctx.move_to(cx + equitonal_dy * i - equitonal_dx * n,
+                        cy + equitonal_dx * i + equitonal_dy * n)
+            ctx.line_to(cx + equitonal_dy * i + equitonal_dx * n,
+                        cy + equitonal_dx * i - equitonal_dy * n)
+            ctx.stroke()
+
         while not q.empty():
             note, name, px, py = q.get()
 
@@ -100,26 +133,24 @@ class TonalMapElement(layout.root.LayoutElement):
             ctx.set_source_rgb(0.2, 0.2, 0.2)
 
             label = f"{name}"
-            ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            ctx.set_font_size(8)
             text_extents = ctx.text_extents(str(label))
 
             for ix, iy in ixy_list:
                 xx = x + ix
-                if xx < cx - self.half_w or xx > cx + self.half_w: continue
-
                 yy = y + iy
-                if yy < cy - self.half_h or yy > cy + self.half_h: continue
 
-                ctx.move_to(xx, yy)
-                ctx.arc(xx, yy, 9, 0, 2. * math.pi)
-                ctx.stroke_preserve()
-                ctx.set_source_rgb(*color)
-                ctx.fill()
+                if xx >= cx - self.half_w and xx <  cx + self.half_w and \
+                   yy >= cy - self.half_h and yy <  cy + self.half_h:
 
-                ctx.set_source_rgb(0.0, 0.0, 0.0)
-                ctx.move_to(xx - text_extents.width / 2., yy + text_extents.height / 2.)
-                ctx.show_text(str(label))
+                    ctx.new_sub_path()
+                    ctx.arc(xx, yy, 9, 0, 2. * math.pi)
+                    ctx.stroke_preserve()
+                    ctx.set_source_rgb(*color)
+                    ctx.fill()
+
+                    ctx.set_source_rgb(0.0, 0.0, 0.0)
+                    ctx.move_to(xx - text_extents.width / 2., yy + text_extents.height / 2.)
+                    ctx.show_text(str(label))
 
         ctx.restore()
 
