@@ -126,6 +126,7 @@ class MainWindow(Gtk.Window):
             cr.save()
             element.render(self.rect, cr)
             cr.restore()
+        time.sleep(0.05)
         self.queue_draw()
 
 class MidiOutput:
