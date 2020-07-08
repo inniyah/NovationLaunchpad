@@ -27,7 +27,7 @@ import rtmidi
 
 
 try:
-    from launchpad_py.charset import *
+    from .charset import *
 except ImportError:
     try:
         from charset import *
