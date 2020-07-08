@@ -195,9 +195,6 @@ class LaunchpadManager:
                 lpbox.setCodeColor(button_num, color_code)
 
     def _run(self, lpbox, midi_out):
-        if not self.lp:
-            return
-
         self.setup()
         self.init_colors(lpbox)
 
