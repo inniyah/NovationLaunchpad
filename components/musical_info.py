@@ -361,6 +361,7 @@ class MusicalInfo():
         self.pitch_classes = [0] * 12
         self.chord = 0
         self.chord_color = None
+        self.chord_note = -1
 
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
@@ -384,23 +385,31 @@ class MusicalInfo():
             self.chord_color = None
             self.chord = chord
 
-    #~ def getChordColor(self):
-        #~ if self.chord_color is None:
-            #~ chords_found = self._find_chords()
-            #~ if chords_found:
-                #~ self.chord_color = self._get_chord_color(chords_found[0][3])
-                #~ print(f"{chords_found} -> {self.chord_color}")
-            #~ else:
-                #~ self.chord_color = self._get_chord_color([])
-        #~ return self.chord_color
+            chord = chord + chord * 2**12
+            self.major_thirds = chord >> 4 & chord & 0b111111111111
+            self.minor_thirds = chord >> 3 & chord & 0b111111111111
+            self.thirds = self.minor_thirds | self.major_thirds
+            self.fifths = chord >> 7 & chord & 0b111111111111
+
+            values = [((self.thirds | (self.thirds << 12)) >> v) & 0xFFF for v in range(12)]
+            if chord:
+                self.chord_note = min(range(len(values)), key=values.__getitem__)
+            else:
+                self.chord_note = -1
+
+        #print(f"Chord: {chord & 0xFFF:03x} ~ {chord & 0xFFF:012b} -> Note: {self.chord_note}, " +
+        #      f"Major 3rds: {self.major_thirds:03x} ~ {self.major_thirds:012b}, " +
+        #      f"Minor 3rds: {self.minor_thirds:03x} ~ {self.minor_thirds:012b}, " +
+        #      f"All 3rds: {self.thirds:03x} ~ {self.thirds:012b}, 5ths: {self.fifths:03x} ~ {self.fifths:012b}");
 
     def getChordColor(self):
         if self.chord_color is None:
             chord_intervals = []
-            for i in range(12):
-                pitch_class = (i - self.root_note) % 12
-                if self.pitch_classes[pitch_class]:
-                    chord_intervals.append(pitch_class)
+            if self.chord:
+                for i in range(12):
+                    pitch_class = (i - self.root_note) % 12
+                    if self.pitch_classes[pitch_class]:
+                        chord_intervals.append(pitch_class)
             self.chord_color = self._get_chord_color(chord_intervals)
         return self.chord_color
 
@@ -413,34 +422,18 @@ class MusicalInfo():
         vdif = [(((c * 7) % 12) - c / 7.) * 7. / 24. for c in chord_intervals]
         axis_ud = sum(vdif) / len(vdif) * 3. / 5.
 
-        chord = self.chord + self.chord * 2**12
-        major_thirds = chord >> 4 & chord & 0b111111111111
-        minor_thirds = chord >> 3 & chord & 0b111111111111
-        thirds = minor_thirds | major_thirds
-        fifths = chord >> 7 & chord & 0b111111111111
-
-        values = [((thirds | (thirds << 12)) >> v) & 0xFFF for v in range(12)]
-        chord_note = min(range(len(values)), key=values.__getitem__)
-
-        print(f"Chord: {chord&0xFFF:03x} ~ {chord&0xFFF:012b} -> Note: {chord_note}, " +
-              f"Major 3rds: {major_thirds:03x} ~ {major_thirds:012b}, Minor 3rds: {minor_thirds:03x} ~ {minor_thirds:012b}, " +
-              f"3rds: {thirds:03x} ~ {thirds:012b}, 5ths: {fifths:03x} ~ {fifths:012b}");
-
-        chord_intervals = chord_intervals[chord_note:] + chord_intervals[:chord_note]
-        chord_intervals_diff = [((12 + j - i) % 12) for i, j in zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1])]
-
-        vmaj = (major_thirds | (major_thirds << 12)) >> chord_note
+        vmaj = (self.major_thirds | (self.major_thirds << 12)) >> self.chord_note
         nmaj = [(1. / (n + 1) if (((vmaj | (vmaj << 12)) >> n) & 1) else 0.) for n in range(12)]
 
-        vmin = (minor_thirds | (minor_thirds << 12)) >> chord_note
+        vmin = (self.minor_thirds | (self.minor_thirds << 12)) >> self.chord_note
         nmin = [(1. / (n + 1) if (((vmin | (vmin << 12)) >> n) & 1) else 0.) for n in range(12)]
 
         axis_mm = 5. * (sum(nmaj) - sum(nmin) ) / len(chord_intervals)
 
         chord_color = lab_to_rgb(75., (3 * axis_mm + axis_ud) * -20., axis_lr * 80.)
-        print(f"Chord Color: intervals = {chord_intervals}, diff = {chord_intervals_diff}, " +
-              f"nmaj = {nmaj}, nmin = {nmin}, " +
-              f"axis_mm = {axis_mm:.2f}, axis_ud = {axis_ud:.2f}, axis_lr = {axis_lr:.2f} -> {chord_color}")
+        #print(f"Chord Color: intervals = {chord_intervals}, nmaj = {nmaj}, nmin = {nmin}, " +
+        #      f"axis_mm = {axis_mm:.2f}, axis_ud = {axis_ud:.2f}, axis_lr = {axis_lr:.2f} -> {chord_color}")
+
         return chord_color
 
     def _check_chord(self, chord, note=(0,0,0)):

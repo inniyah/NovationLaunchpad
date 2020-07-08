@@ -37,6 +37,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         notes_in_scale = self.music_info.notes_in_scale
         pitch_classes = self.music_info.pitch_classes
         chord_color = self.music_info.getChordColor()
+        chord_note = self.music_info.chord_note
 
         note_radius = 12
         base_y = ypos + height - self.border_gap - note_radius
@@ -152,10 +153,20 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             ctx.set_line_width(note_border)
             ctx.stroke()
 
+            is_root_note = False
             if (n % 12 == self.music_info.root_note % 12):
+                is_root_note = True
                 ctx.set_source_rgb(0., 0., 0.)
                 ctx.arc(x, y, r + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)
+                ctx.stroke()
+
+            if (n % 12 == self.music_info.chord_note):
+                ctx.set_source_rgb(*get_color_from_note(n, .6, .6))
+                if is_root_note: nr = r + 10.
+                else: nr = r + 6.
+                ctx.arc(x, y, nr, 0, 2. * math.pi)
+                ctx.set_line_width(3.0)
                 ctx.stroke()
 
             label = self.music_info.note_names[n % 12]
