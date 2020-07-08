@@ -32,9 +32,9 @@ class KeyboardManager:
 
         midi_port_name = 'USB Uno MIDI Interface'
         midi_port_num = 1 if len(available_ports) > 0 else 0
-        print("MIDI input ports:")
+        #~ print("MIDI input ports:")
         for port_num, port_name in enumerate(available_ports):
-            print("    %s" % (port_name,))
+            #~ print("    %s" % (port_name,))
             if port_name.lower().find( midi_port_name.lower() ) >= 0:
                 midi_port_num = port_num
 

@@ -20,6 +20,10 @@ import cairo
 import layout
 
 import rtmidi
+try:
+    import evdev
+except:
+    evdev = None
 
 from components.piano_keyboard     import KeyboardManager, PianoElement
 from components.novation_launchpad import LaunchpadManager, LaunchpadElement, LAUNCHPAD_LAYOUTS
@@ -198,11 +202,47 @@ class MidiOutput:
         for element in self.elements:
             element.playNote(channel, note, velocity)
 
+def printInfo():
+    if rtmidi:
+        midi_in = rtmidi.MidiIn()
+        midi_in_ports = midi_in.get_ports()
+        if midi_in_ports:
+            print("\nMIDI input ports:")
+            for port_num, port_name in enumerate(midi_in_ports):
+                print(f" {port_num}: '{port_name}'")
+
+        midi_out = rtmidi.MidiOut()
+        midi_out_ports = midi_out.get_ports()
+        if midi_out_ports:
+            print("\nMIDI output ports:")
+            for port_num, port_name in enumerate(midi_out_ports):
+                print(f" {port_num}: '{port_name}'")
+
+    # Remember to add yourself to the group 'input' if you're not root (and you should't be!)
+    devs = [evdev.InputDevice(fn) for fn in evdev.list_devices()]
+    if evdev and devs:
+        print("\nInput Devices:")
+        for dev in devs:
+            print(f" '{dev.fn}': '{dev.name}'")
+
 def main():
     parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
     parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
     parser.add_argument('-l', '--layout', help="Launchpad Layout", dest='layout', default="III_iii")
+    parser.add_argument('-d', '--device', help="Input keyboard device", dest='evdev', action='append', nargs='+')
+    parser.add_argument('-i', '--info', help="Print info", dest='info', action='store_true')
+    parser.add_argument("-v", "--verbose", dest='verbose', action="count", default=0)
     args = parser.parse_args()
+
+    if args.verbose:
+        print(f"~ Verbosity Level: {args.verbose}")
+
+    if args.info:
+        printInfo()
+        sys.exit(0)
+
+    if args.evdev:
+        print(f"~ Input Devices: {args.evdev}")
 
     music_info = MusicalInfo()
 
