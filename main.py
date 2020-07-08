@@ -31,6 +31,7 @@ from components.diagram_of_thirds  import DiagramOfThirdsElement
 from components.circle_of_fifths   import CircleOfFifthsElement
 from components.tonal_map          import TonalMapElement
 from components.musical_info       import MusicDefs, MusicalInfo
+from components.event_device       import EventDeviceManager
 
 import components.fluidsynth as fluidsynth
 
@@ -223,13 +224,13 @@ def printInfo():
     if evdev and devs:
         print("\nInput Devices:")
         for dev in devs:
-            print(f" '{dev.fn}': '{dev.name}'")
+            print(f" '{dev.path}': '{dev.name}'")
 
 def main():
     parser = argparse.ArgumentParser(description="Novation Launchpad MIDI Player")
     parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
     parser.add_argument('-l', '--layout', help="Launchpad Layout", dest='layout', default="III_iii")
-    parser.add_argument('-d', '--device', help="Input keyboard device", dest='evdev', action='append', nargs='+')
+    parser.add_argument('-e', '--event-device', help="Input keyboard device", dest='evdev', action='append', nargs='+')
     parser.add_argument('-i', '--info', help="Print info", dest='info', action='store_true')
     parser.add_argument("-v", "--verbose", dest='verbose', action="count", default=0)
     args = parser.parse_args()
@@ -240,9 +241,6 @@ def main():
     if args.info:
         printInfo()
         sys.exit(0)
-
-    if args.evdev:
-        print(f"~ Input Devices: {args.evdev}")
 
     music_info = MusicalInfo()
 
@@ -270,11 +268,16 @@ def main():
     lp_manager = LaunchpadManager(lpad, midi_out)
     lp_manager.start()
 
+    evdev_manager = None
+    if args.evdev:
+        evdev_manager = EventDeviceManager(args.evdev, midi_out)
+
     #~ music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     Gtk.main()
 
-    lp_manager.stop()
+    if lp_manager: lp_manager.stop()
+    if evdev_manager: evdev_manager.stop()
 
     print("All threads finished")
 
