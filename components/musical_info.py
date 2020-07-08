@@ -397,8 +397,8 @@ class MusicalInfo():
         vdif = [(((c * 7) % 12) - c / 7.) * 7. / 24. for c in chord_intervals]
         axis_ud = sum(vdif) / len(vdif) * 3. / 5.
 
-        nmaj = [(1. / (n + 1) if (j - i) == 4 else 0.) for n, (i, j) in enumerate(zip(chord_intervals[:-1], chord_intervals[1:]))]
-        nmin = [(1. / (n + 1) if (j - i) == 3 else 0.) for n, (i, j) in enumerate(zip(chord_intervals[:-1], chord_intervals[1:]))]
+        nmaj = [(1. / (n + 1) if ((12 + j - i) % 12) == 4 else 0.) for n, (i, j) in enumerate(zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1]))]
+        nmin = [(1. / (n + 1) if ((12 + j - i) % 12) == 3 else 0.) for n, (i, j) in enumerate(zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1]))]
         axis_mm = 5. * (sum(nmaj) - sum(nmin) ) / len(chord_intervals)
 
         chord_color = lab_to_rgb(75., (3 * axis_mm + axis_ud) * -20., axis_lr * 80.)
