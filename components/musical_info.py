@@ -368,14 +368,24 @@ class MusicalInfo():
             self.chord_color = None
             self.chord = chord
 
+    #~ def getChordColor(self):
+        #~ if self.chord_color is None:
+            #~ chords_found = self._find_chords()
+            #~ if chords_found:
+                #~ self.chord_color = self._get_chord_color(chords_found[0][3])
+                #~ print(f"{chords_found} -> {self.chord_color}")
+            #~ else:
+                #~ self.chord_color = self._get_chord_color([])
+        #~ return self.chord_color
+
     def getChordColor(self):
         if self.chord_color is None:
-            chords_found = self._find_chords()
-            if chords_found:
-                self.chord_color = self._get_chord_color(chords_found[0][3])
-                print(f"{chords_found} -> {self.chord_color}")
-            else:
-                self.chord_color = self._get_chord_color([])
+            chord_intervals = []
+            for i in range(12):
+                pitch_class = (i - self.root_note) % 12
+                if self.pitch_classes[pitch_class]:
+                    chord_intervals.append(pitch_class)
+            self.chord_color = self._get_chord_color(chord_intervals)
         return self.chord_color
 
     def _get_chord_color(self, chord_intervals):
