@@ -282,6 +282,22 @@ def rgb_to_lab(r, g, b):
 
     return [(116. * y) - 16., 500. * (x - y), 200. * (y - z)]
 
+# This works for counting non-zero bits in 64-bit positive numbers
+def count_bits(n):
+    n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)
+    n = (n & 0x3333333333333333) + ((n & 0xCCCCCCCCCCCCCCCC) >> 2)
+    n = (n & 0x0F0F0F0F0F0F0F0F) + ((n & 0xF0F0F0F0F0F0F0F0) >> 4)
+    n = (n & 0x00FF00FF00FF00FF) + ((n & 0xFF00FF00FF00FF00) >> 8)
+    n = (n & 0x0000FFFF0000FFFF) + ((n & 0xFFFF0000FFFF0000) >> 16)
+    n = (n & 0x00000000FFFFFFFF) + ((n & 0xFFFFFFFF00000000) >> 32)
+    return n
+
+def get_lower_bit_pos(value):
+    for i in range(32):
+        if (value & 1): return i
+        elif not value: return 0
+        value >>= 1
+    return 0
 
 class MusicalInfo():
     #NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
@@ -397,12 +413,34 @@ class MusicalInfo():
         vdif = [(((c * 7) % 12) - c / 7.) * 7. / 24. for c in chord_intervals]
         axis_ud = sum(vdif) / len(vdif) * 3. / 5.
 
-        nmaj = [(1. / (n + 1) if ((12 + j - i) % 12) == 4 else 0.) for n, (i, j) in enumerate(zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1]))]
-        nmin = [(1. / (n + 1) if ((12 + j - i) % 12) == 3 else 0.) for n, (i, j) in enumerate(zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1]))]
+        chord = self.chord + self.chord * 2**12
+        major_thirds = chord >> 4 & chord & 0b111111111111
+        minor_thirds = chord >> 3 & chord & 0b111111111111
+        thirds = minor_thirds | major_thirds
+        fifths = chord >> 7 & chord & 0b111111111111
+
+        values = [((thirds | (thirds << 12)) >> v) & 0xFFF for v in range(12)]
+        chord_note = min(range(len(values)), key=values.__getitem__)
+
+        print(f"Chord: {chord&0xFFF:03x} ~ {chord&0xFFF:012b} -> Note: {chord_note}, " +
+              f"Major 3rds: {major_thirds:03x} ~ {major_thirds:012b}, Minor 3rds: {minor_thirds:03x} ~ {minor_thirds:012b}, " +
+              f"3rds: {thirds:03x} ~ {thirds:012b}, 5ths: {fifths:03x} ~ {fifths:012b}");
+
+        chord_intervals = chord_intervals[chord_note:] + chord_intervals[:chord_note]
+        chord_intervals_diff = [((12 + j - i) % 12) for i, j in zip(chord_intervals, chord_intervals[1:] + chord_intervals[:1])]
+
+        vmaj = (major_thirds | (major_thirds << 12)) >> chord_note
+        nmaj = [(1. / (n + 1) if (((vmaj | (vmaj << 12)) >> n) & 1) else 0.) for n in range(12)]
+
+        vmin = (minor_thirds | (minor_thirds << 12)) >> chord_note
+        nmin = [(1. / (n + 1) if (((vmin | (vmin << 12)) >> n) & 1) else 0.) for n in range(12)]
+
         axis_mm = 5. * (sum(nmaj) - sum(nmin) ) / len(chord_intervals)
 
         chord_color = lab_to_rgb(75., (3 * axis_mm + axis_ud) * -20., axis_lr * 80.)
-        print(f"Chord Color: intervals = {chord_intervals}, nmaj = {nmaj}, nmin = {nmin}, axis_mm = {axis_mm}, axis_ud = {axis_ud}, axis_lr = {axis_lr} -> {chord_color}")
+        print(f"Chord Color: intervals = {chord_intervals}, diff = {chord_intervals_diff}, " +
+              f"nmaj = {nmaj}, nmin = {nmin}, " +
+              f"axis_mm = {axis_mm:.2f}, axis_ud = {axis_ud:.2f}, axis_lr = {axis_lr:.2f} -> {chord_color}")
         return chord_color
 
     def _check_chord(self, chord, note=(0,0,0)):
