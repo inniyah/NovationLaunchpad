@@ -142,8 +142,8 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
                 note_border = 1.0
 
             if key_pressed:
-                r = note_radius * 1.5
-                note_border = 5.0
+                r = note_radius * 1.8
+                note_border = 6.0
 
             ctx.set_source_rgb(*note_color)
             ctx.arc(x, y, r, 0, 2. * math.pi)
