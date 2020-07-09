@@ -10,34 +10,93 @@ import time
 import random
 import cairo
 import layout
+import evdev
+import asyncio
 
 from threading import Thread, Lock
 
 class EventDeviceManager:
+
+    KEY2MIDI = {
+        evdev.ecodes.ecodes['KEY_Z']: 60,
+        evdev.ecodes.ecodes['KEY_S']: 61,
+        evdev.ecodes.ecodes['KEY_X']: 62,
+        evdev.ecodes.ecodes['KEY_D']: 63,
+        evdev.ecodes.ecodes['KEY_C']: 64,
+        evdev.ecodes.ecodes['KEY_V']: 65,
+        evdev.ecodes.ecodes['KEY_G']: 66,
+        evdev.ecodes.ecodes['KEY_B']: 67,
+        evdev.ecodes.ecodes['KEY_H']: 68,
+        evdev.ecodes.ecodes['KEY_N']: 69,
+        evdev.ecodes.ecodes['KEY_J']: 70,
+        evdev.ecodes.ecodes['KEY_M']: 71,
+        evdev.ecodes.ecodes['KEY_Q']: 72,
+        evdev.ecodes.ecodes['KEY_2']: 73,
+        evdev.ecodes.ecodes['KEY_W']: 74,
+        evdev.ecodes.ecodes['KEY_3']: 75,
+        evdev.ecodes.ecodes['KEY_E']: 76,
+        evdev.ecodes.ecodes['KEY_R']: 77,
+        evdev.ecodes.ecodes['KEY_5']: 78,
+        evdev.ecodes.ecodes['KEY_T']: 79,
+        evdev.ecodes.ecodes['KEY_6']: 80,
+        evdev.ecodes.ecodes['KEY_Y']: 81,
+        evdev.ecodes.ecodes['KEY_7']: 82,
+        evdev.ecodes.ecodes['KEY_U']: 83,
+        evdev.ecodes.ecodes['KEY_I']: 84,
+        evdev.ecodes.ecodes['KEY_9']: 85,
+        evdev.ecodes.ecodes['KEY_O']: 86,
+        evdev.ecodes.ecodes['KEY_0']: 87,
+        evdev.ecodes.ecodes['KEY_P']: 88,
+    }
+
     def __init__(self, evdev_list, midi_out=None):
         print(f"~ Creating EventDeviceManager: {evdev_list}")
         self.running = False
-        self.thread = Thread(target = self._run, args = (midi_out,))
+        self.thread = Thread(target = self._run, args = (evdev_list, True, midi_out))
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing EventDeviceManager")
-        self.finish()
+        self.stop()
 
-    def setup(self):
-        pass
+    def _run(self, evdev_list, grab, midi_out):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-    def finish(self):
-        pass
+        device_path = evdev_list[0]
+        print(f"~ Running EventDeviceManager ('{device_path}')")
 
-    def _run(self, midi_out):
-        print("~ Running EventDeviceManager")
+        dev = evdev.InputDevice(device_path)
 
-        self.setup()
+        if grab:
+            dev.grab()
 
+        ctrl_down = False
         while self.running:
-                time.sleep(0.001 * 5)
+            ev = dev.read_one()
+            if not ev is None:
+                if ev.type == evdev.ecodes.EV_KEY:
+                    if ev.code == evdev.ecodes.KEY_LEFTCTRL:
+                        ctrl_down = ev.value != 0
+                    elif ev.code == evdev.ecodes.KEY_C:
+                        if ctrl_down:
+                            print("^C detected, exiting")
+                            self.running = False
+                            break
 
-        self.finish()
+                note = self.KEY2MIDI.get(ev.code)
+                if note is not None and midi_out:
+                    if ev.value == 1:
+                        midi_out.play_note(2, note, 127)
+                    elif ev.value == 0:
+                        midi_out.play_note(2, note, 0)
+
+            else:
+                time.sleep(0.01)
+
+        print(f"~ Stopping EventDeviceManager ('{device_path}')")
+
+        if grab:
+            dev.ungrab()
 
     def start(self):
         self.running = True
@@ -47,3 +106,4 @@ class EventDeviceManager:
         self.running = False
         if self.thread:
             self.thread.join()
+            self.thread = None

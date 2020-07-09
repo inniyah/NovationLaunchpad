@@ -20,6 +20,7 @@ import cairo
 import layout
 
 import rtmidi
+
 try:
     import evdev
 except:
@@ -269,8 +270,9 @@ def main():
     lp_manager.start()
 
     evdev_manager = None
-    if args.evdev:
-        evdev_manager = EventDeviceManager(args.evdev, midi_out)
+    if evdev and args.evdev:
+        evdev_manager = EventDeviceManager(sum(args.evdev, []), midi_out)
+        evdev_manager.start()
 
     #~ music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
