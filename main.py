@@ -261,10 +261,10 @@ def main():
 
     box = layout.BoxLM()
     box.left = lpad
-    box.top = piano
+    box.bottom = piano
     #~ box.center = tonalmap
     box.center = dthirds
-    box.bottom = DummyElement(50, 10)
+    box.top = DummyElement(50, 10)
     box.right = cfifths
     box.margin = 1
 

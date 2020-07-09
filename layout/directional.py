@@ -7,17 +7,17 @@ class VerticalLM(root.GroupLayoutManager):
     how they are distributed vertically, as well as their horizontal
     alignment.
     """
-    #: Align the elements so they are bunched at the top of the
+    #: Align the elements so they are bunched at the bottom of the
     #: available space.
-    ALIGN_TOP = 0
+    ALIGN_BOTTOM = 0
 
     #: Align the elements so they are in the middle of the available
     #: space.
     ALIGN_MIDDLE = 1
 
-    #: Align the elements so they sit at the bottom of the available
+    #: Align the elements so they sit at the top of the available
     #: space.
-    ALIGN_BOTTOM = 2
+    ALIGN_TOP = 2
 
     #: Align the elements vertcially so that any extra space is
     #: distributed equally between the elements.
@@ -44,7 +44,7 @@ class VerticalLM(root.GroupLayoutManager):
 
     # A tuple of align type values so we can distinguish between the
     # simple an complex cases.
-    _ALIGN_SIMPLE_SET = (ALIGN_TOP, ALIGN_MIDDLE, ALIGN_BOTTOM)
+    _ALIGN_SIMPLE_SET = (ALIGN_BOTTOM, ALIGN_MIDDLE, ALIGN_TOP)
 
     _VALID_ALIGN_HORIZONTAL = (
         ALIGN_LEFT, ALIGN_CENTER, ALIGN_RIGHT, ALIGN_GROW
@@ -118,7 +118,7 @@ class VerticalLM(root.GroupLayoutManager):
         y = rect.y
         if self.vertical_align == VerticalLM.ALIGN_MIDDLE:
             y = rect.y + extra_height*0.5
-        elif self.vertical_align == VerticalLM.ALIGN_TOP:
+        elif self.vertical_align == VerticalLM.ALIGN_BOTTOM:
             y = rect.y + extra_height
 
         # Render each child element
@@ -183,14 +183,14 @@ class HorizontalLM(root.GroupLayoutManager):
     #: elements need it to be.
     ALIGN_EQUAL_GROWTH = 14
 
-    #: Align each element to the top of the layout.
-    ALIGN_TOP = 0
+    #: Align each element to the bottom of the layout.
+    ALIGN_BOTTOM = 0
 
     #: Align each element to the middle of the layout.
     ALIGN_MIDDLE = 1
 
-    #: Align each element to the bottom of the layout.
-    ALIGN_BOTTOM = 2
+    #: Align each element to the top of the layout.
+    ALIGN_TOP = 2
 
     #: Align each element so that it stretches vertically to fill
     #: the layout.
@@ -204,7 +204,7 @@ class HorizontalLM(root.GroupLayoutManager):
     _VALID_ALIGN_HORIZONTAL = _ALIGN_SIMPLE_SET + (
         ALIGN_EQUAL_SPACING, ALIGN_EQUAL_GROWTH
         )
-    _VALID_ALIGN_VERTICAL = (ALIGN_TOP, ALIGN_MIDDLE, ALIGN_BOTTOM, ALIGN_GROW)
+    _VALID_ALIGN_VERTICAL = (ALIGN_BOTTOM, ALIGN_MIDDLE, ALIGN_TOP, ALIGN_GROW)
 
     def __init__(self, margin=0,
                  vertical_align=ALIGN_GROW,
@@ -275,13 +275,13 @@ class HorizontalLM(root.GroupLayoutManager):
             size = element.get_minimum_size(data)
 
             # Work out the y-coordinates
-            if self.vertical_align == HorizontalLM.ALIGN_TOP:
+            if self.vertical_align == HorizontalLM.ALIGN_BOTTOM:
                 y = rect.top - size.y
                 h = size.y
             elif self.vertical_align == HorizontalLM.ALIGN_MIDDLE:
                 y = rect.middle - size.y*0.5
                 h = size.y
-            elif self.vertical_align == HorizontalLM.ALIGN_BOTTOM:
+            elif self.vertical_align == HorizontalLM.ALIGN_TOP:
                 y = rect.y
                 h = size.y
             else:

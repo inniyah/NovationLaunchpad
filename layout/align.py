@@ -8,14 +8,14 @@ class AlignLM(root.LayoutManager):
     size. Several of the other layout managers do some alignment as
     part of their normal behavior.
     """
-    #: Align the element to the top of the space.
-    ALIGN_TOP = 0
+    #: Align the element to the bottom of the space.
+    ALIGN_BOTTOM = 0
 
     #: Align the element to the vertical middle of the space.
     ALIGN_MIDDLE = 1
 
-    #: Align the element to the bottom of the space.
-    ALIGN_BOTTOM = 2
+    #: Align the element to the top of the space.
+    ALIGN_TOP = 2
 
     #: Align the element to top and bottom, making it grow vertically.
     GROW_Y = 3
@@ -35,7 +35,7 @@ class AlignLM(root.LayoutManager):
     def __init__(self,
                  min_width=0, min_height=0,
                  horizontal_align=ALIGN_LEFT,
-                 vertical_align=ALIGN_TOP,
+                 vertical_align=ALIGN_BOTTOM,
                  element=None):
         """
         Arguments:
@@ -53,10 +53,10 @@ class AlignLM(root.LayoutManager):
             element should be aligned horizontally within its space
             (default: :data:`ALIGN_LEFT`)
 
-        ``vertcal_align``
+        ``vertical_align``
             One of the constants defined in this class for how the
             element should be aligned vertically within its space
-            (default: :data:`ALIGN_TOP`)
+            (default: :data:`ALIGN_BOTTOM`)
         """
         self.horizontal_align = horizontal_align
         self.vertical_align = vertical_align
@@ -79,7 +79,7 @@ class AlignLM(root.LayoutManager):
         # the size limits.
         size = self.element.get_minimum_size(data)
 
-        # Assume we're bottom left at our natural size.
+        # Assume we're top left at our natural size.
         x = rect.x
         y = rect.y
         w = size.x
@@ -97,7 +97,7 @@ class AlignLM(root.LayoutManager):
 
         if self.vertical_align == AlignLM.ALIGN_MIDDLE:
             y += extra_height * 0.5
-        elif self.vertical_align == AlignLM.ALIGN_TOP:
+        elif self.vertical_align == AlignLM.ALIGN_BOTTOM:
             y += extra_height
         elif self.vertical_align == AlignLM.GROW_Y:
             h = rect.h

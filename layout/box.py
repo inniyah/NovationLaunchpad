@@ -132,13 +132,13 @@ class BoxLM(root.LayoutManager):
     def render(self, rect, data):
         x, y, w, h = rect.get_data()
 
-        if self.top is not None:
-            size = self.top.get_minimum_size(data)
-            self.top.render(datatypes.Rectangle(x,y+h-size.y,w,size.y), data)
-            h -= size.y + self.margin
         if self.bottom is not None:
             size = self.bottom.get_minimum_size(data)
-            self.bottom.render(datatypes.Rectangle(x, y, w, size.y), data)
+            self.bottom.render(datatypes.Rectangle(x,y+h-size.y,w,size.y), data)
+            h -= size.y + self.margin
+        if self.top is not None:
+            size = self.top.get_minimum_size(data)
+            self.top.render(datatypes.Rectangle(x, y, w, size.y), data)
             y += size.y + self.margin
             h -= size.y + self.margin
         if self.right is not None:
@@ -152,4 +152,3 @@ class BoxLM(root.LayoutManager):
             x += size.x + self.margin
         if self.center is not None:
             self.center.render(datatypes.Rectangle(x, y, w, h), data)
-
