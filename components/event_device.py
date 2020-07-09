@@ -12,6 +12,7 @@ import cairo
 import layout
 import evdev
 import asyncio
+import selectors
 
 from threading import Thread, Lock
 
@@ -53,50 +54,61 @@ class EventDeviceManager:
         print(f"~ Creating EventDeviceManager: {evdev_list}")
         self.running = False
         self.thread = Thread(target = self._run, args = (evdev_list, True, midi_out))
+        self.asyncio_loop = None
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing EventDeviceManager")
         self.stop()
 
-    def _run(self, evdev_list, grab, midi_out):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    def _run(self, evdev_paths, grab, midi_out):
+        print(f"~ Running EventDeviceManager Thread ('{evdev_paths}')")
 
-        device_path = evdev_list[0]
-        print(f"~ Running EventDeviceManager ('{device_path}')")
+        self.asyncio_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.asyncio_loop)
 
-        dev = evdev.InputDevice(device_path)
+        devices = [evdev.InputDevice(path) for path in evdev_paths]
 
         if grab:
-            dev.grab()
+            for device in devices:
+                device.grab()
+
+        selector = selectors.DefaultSelector()
+
+        for device in devices:
+            selector.register(device, selectors.EVENT_READ) # This works because InputDevice has a `fileno()` method.
 
         ctrl_down = False
         while self.running:
-            ev = dev.read_one()
-            if not ev is None:
-                if ev.type == evdev.ecodes.EV_KEY:
-                    if ev.code == evdev.ecodes.KEY_LEFTCTRL:
-                        ctrl_down = ev.value != 0
-                    elif ev.code == evdev.ecodes.KEY_C:
-                        if ctrl_down:
-                            print("^C detected, exiting")
-                            self.running = False
-                            break
+            for key, mask in selector.select(0.1):
+                device = key.fileobj
+                for event in device.read():
+                    #~ print(device.path, evdev.categorize(event), sep=': ')
 
-                note = self.KEY2MIDI.get(ev.code)
-                if note is not None and midi_out:
-                    if ev.value == 1:
-                        midi_out.play_note(2, note, 127)
-                    elif ev.value == 0:
-                        midi_out.play_note(2, note, 0)
+                    if event.type == evdev.ecodes.EV_KEY:
+                        if event.code == evdev.ecodes.KEY_LEFTCTRL:
+                            ctrl_down = event.value != 0
+                        elif event.code == evdev.ecodes.KEY_C:
+                            if ctrl_down:
+                                print("^C detected, exiting")
+                                self.running = False
+                                break
 
-            else:
-                time.sleep(0.01)
+                    note = self.KEY2MIDI.get(event.code)
+                    if note is not None and midi_out:
+                        if event.value == 1:
+                            midi_out.play_note(2, note, 127)
+                        elif event.value == 0:
+                            midi_out.play_note(2, note, 0)
 
-        print(f"~ Stopping EventDeviceManager ('{device_path}')")
+        print(f"~ Stopping EventDeviceManager Thread ('{evdev_paths}')")
+
+        self.asyncio_loop.stop()
+        self.asyncio_loop.close()
+        self.asyncio_loop = None
 
         if grab:
-            dev.ungrab()
+            for device in devices:
+                device.ungrab()
 
     def start(self):
         self.running = True
@@ -106,4 +118,4 @@ class EventDeviceManager:
         self.running = False
         if self.thread:
             self.thread.join()
-            self.thread = None
+        self.thread = None

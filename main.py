@@ -36,6 +36,14 @@ from components.event_device       import EventDeviceManager
 
 import components.fluidsynth as fluidsynth
 
+
+#~ def trace(frame, event, arg):
+    #~ #print(f"[{event}] {frame.f_code.co_filename}:{frame.f_lineno}")
+    #~ return trace
+
+#~ sys.settrace(trace)
+
+
 # This works for counting non-zero bits in 64-bit positive numbers
 def count_bits(n):
     n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)

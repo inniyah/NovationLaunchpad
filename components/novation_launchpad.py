@@ -57,6 +57,7 @@ class LaunchpadManager:
     COLOR_CODES_FOR_NOTES = [ 7, 11, 15, 19, 27, 31, 35, 39, 47, 51, 55, 59]
 
     def __init__(self, lpbox, midi_out=None):
+        print("~ Creating LaunchpadManager")
         self.mode = None
         self.lp = None
         self.running = False
@@ -198,6 +199,8 @@ class LaunchpadManager:
         if self.mode is None: # No Launchpads were found
             return
 
+        print("~ Running LaunchpadManager Thread")
+
         self.setup()
         self.init_colors(lpbox)
 
@@ -239,6 +242,8 @@ class LaunchpadManager:
                         lpbox.setCodeColor(but[0], c)
             else:
                 time.sleep(0.001 * 5)
+
+        print("~ Stopping LaunchpadManager Thread")
 
         self.finish()
 
