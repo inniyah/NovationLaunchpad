@@ -66,7 +66,7 @@ class MusicStaffElement(layout.root.LayoutElement):
             cromatic_note = note % 12
             diatonic_note = self.DIATONIC_NOTES[cromatic_note]
             yslot = ( (7 - octave) * 7 - diatonic_note )
-            print(f"Score Note {note}: octave = {octave} + cromatic = {cromatic_note} -> diatonic = {diatonic_note} -> yslot = {yslot}")
+            #~ print(f"Score Note {note}: octave = {octave} + cromatic = {cromatic_note} -> diatonic = {diatonic_note} -> yslot = {yslot}")
             return yslot
 
     def render(self, rect, ctx):
@@ -97,9 +97,10 @@ class MusicStaffElement(layout.root.LayoutElement):
             ctx.stroke()
 
         vp = Rsvg.Rectangle()
-        vp.x, vp.y, vp.width, vp.height = score_xpos, score_ypos + self.yslot_for_note(80) * yslot_height, score_width, yslot_height * 11
+        vp.width, vp.height = score_width, yslot_height * 13
+        vp.x, vp.y = score_xpos, score_ypos + self.yslot_for_note(81) * yslot_height
         self.clefs_svg.render_element(ctx, "#treble", vp)
-        vp.x, vp.y, vp.width, vp.height = score_xpos, score_ypos + self.yslot_for_note(61) * yslot_height, score_width, yslot_height * 11
+        vp.x, vp.y = score_xpos, score_ypos + self.yslot_for_note(62) * yslot_height
         self.clefs_svg.render_element(ctx, "#bass", vp)
 
         for note in range(self.SCORE_MIN_NOTE, self.SCORE_MAX_NOTE + 1):
