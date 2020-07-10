@@ -23,7 +23,7 @@ class MusicStaffElement(layout.root.LayoutElement):
     def __init__(self, music_info):
         self.music_info = music_info
         self.border_gap = 10.
-        width, height = 300, 200
+        width, height = 300, 7 * 4 * 5
         self.ims = self.get_base_image(width, height)
         self.size = layout.datatypes.Point(width + self.border_gap * 2, height + self.border_gap * 2)
 
@@ -66,5 +66,28 @@ class MusicStaffElement(layout.root.LayoutElement):
         ctx.set_operator(cairo.OPERATOR_OVER);
         ctx.set_source_surface(self.ims, xpos + self.border_gap, ypos + self.border_gap)
         ctx.paint()
+
+        score_lines = (43, 47, 50, 53, 57, # G2, B2, D3, F3, A3
+                       64, 67, 71, 74, 77) # E4, G4, B4, D5, F5
+        diatonic_notes = { 0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 6 }
+        for note in range (36, 84 + 1): # from C2 to C6, both included
+            octave = note // 12
+            cromatic_note = note % 12
+            diatonic_note = diatonic_notes[cromatic_note]
+
+            y = ypos + self.border_gap + (height - 2 * self.border_gap) * ( (7 - octave) * 7 - diatonic_note ) / (4 * 8)
+
+            ctx.set_source_rgb(0., 0., 0.)
+            ctx.set_line_width(1)
+            if note in score_lines:
+                ctx.move_to(cx + note - 150, y)
+                ctx.line_to(cx + note + 150, y)
+            else:
+                ctx.move_to(cx + note - 20, y)
+                ctx.line_to(cx + note + 20, y)
+            ctx.stroke()
+
+            ctx.arc(xpos + 50 + 12 * note, y, 4, 0, 2. * math.pi)
+            ctx.fill()
 
         ctx.restore()
