@@ -31,11 +31,11 @@ class MusicStaffElement(layout.root.LayoutElement):
         width, height = 300, 7 * 4 * 5
         self.size = layout.datatypes.Point(width + self.border_gap * 2, height + self.border_gap * 2)
 
-        self.clefs_svg = Rsvg.Handle().new_from_file(os.path.join("artwork", "clefs.svg"))
+        self.symbols_svg = Rsvg.Handle().new_from_file(os.path.join("artwork", "music_symbols.svg"))
         #~ self.ims = self.get_base_image(width, height)
 
     def __del__(self):
-        self.clefs_svg.close()
+        self.symbols_svg.close()
 
     def get_minimum_size(self, ctx):
         return self.size
@@ -50,9 +50,9 @@ class MusicStaffElement(layout.root.LayoutElement):
 
         vp = Rsvg.Rectangle()
         vp.x, vp.y, vp.width, vp.height = 0, 0, width, height
-        #~ self.clefs_svg.render_document(ctx, vp)
-        self.clefs_svg.render_element(ctx, "#treble", vp)
-        self.clefs_svg.render_element(ctx, "#bass", vp)
+        #~ self.symbols_svg.render_document(ctx, vp)
+        self.symbols_svg.render_element(ctx, "#treble", vp)
+        self.symbols_svg.render_element(ctx, "#bass", vp)
 
         ctx.set_source_rgba(1, 0, 0, 1);
         ctx.set_line_width(5);
@@ -100,9 +100,9 @@ class MusicStaffElement(layout.root.LayoutElement):
         vp = Rsvg.Rectangle()
         vp.width, vp.height = score_width, yslot_height * 13
         vp.x, vp.y = score_xpos, score_ypos + self.yslot_for_note(81) * yslot_height
-        self.clefs_svg.render_element(ctx, "#treble", vp)
+        self.symbols_svg.render_element(ctx, "#treble", vp)
         vp.x, vp.y = score_xpos, score_ypos + self.yslot_for_note(62) * yslot_height
-        self.clefs_svg.render_element(ctx, "#bass", vp)
+        self.symbols_svg.render_element(ctx, "#bass", vp)
 
         max_note = self.SCORE_MAX_NOTE
         for note in range(self.MAX_NOTE, max_note, -1):
@@ -116,6 +116,9 @@ class MusicStaffElement(layout.root.LayoutElement):
                 min_note = note
                 break
 
+        vp = Rsvg.Rectangle()
+        vp.width, vp.height = yslot_height * 2.5, yslot_height * 5
+
         for note in range(self.MIN_NOTE, self.MAX_NOTE + 1):
             x = cx
             yslot = self.yslot_for_note(note)
@@ -124,16 +127,22 @@ class MusicStaffElement(layout.root.LayoutElement):
             if (yslot % 2) == 0:
                 ledger_line = note > self.SCORE_MAX_NOTE and note <= max_note
 
-                if (note > self.SCORE_MAX_NOTE and note <= max_note) or (note < self.SCORE_MIN_NOTE and note >= min_note) or (note == self.SCORE_MID_NOTE and self.music_info.keys_pressed[note]):
-                    ctx.set_source_rgb(0.0, 0.1, 0.3)
-                    ctx.set_line_width(1)
-                    ctx.move_to(x - 6, y)
-                    ctx.line_to(x + 6, y)
-                    ctx.stroke()
+                if (note > self.SCORE_MAX_NOTE and note <= max_note) or \
+                   (note < self.SCORE_MIN_NOTE and note >= min_note) or \
+                   (note == self.SCORE_MID_NOTE and self.music_info.keys_pressed[note]):
+                        ctx.set_source_rgb(0.0, 0.1, 0.3)
+                        ctx.set_line_width(1)
+                        ctx.move_to(x - 6, y)
+                        ctx.line_to(x + 6, y)
+                        ctx.stroke()
 
             if self.music_info.keys_pressed[note]:
                 ctx.set_source_rgb(0.0, 0.0, 0.0)
                 ctx.arc(x, y, 4, 0, 2. * math.pi)
                 ctx.fill()
+
+                vp.x, vp.y = x - vp.width, y - vp.height / 2
+                #~ self.symbols_svg.render_element(ctx, "#flat", vp)
+                #~ self.symbols_svg.render_element(ctx, "#sharp", vp)
 
         ctx.restore()
