@@ -311,6 +311,8 @@ class MusicalInfo():
             self.chord_color = None
             self.chord = chord
 
+            chord_signature, chord_note, chord_name, chord_intervals = self._find_chord()
+
             chord = chord + chord * 2**12
             self.major_thirds = chord >> 4 & chord & 0b111111111111
             self.minor_thirds = chord >> 3 & chord & 0b111111111111
@@ -430,6 +432,18 @@ class MusicalInfo():
         for combined_signature, combined_root, combined_name, combined_intervals in combined_chords:
             print(f" >>> Combined: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {combined_intervals}")
         return combined_chords
+
+    def _find_chord(self):
+        pitch_classes = self.chord
+        for chords_list in self.CHORDS_INFO:
+            for n in range(12):
+                for chord_signatures, chord_intervals, chord_name in chords_list:
+                    note = (self.root_note + n * 7) % 12
+                    chord_signature = chord_signatures[note]
+                    if (pitch_classes & chord_signature) == chord_signature:
+                        print(f"Found: {chord_name} on {self.note_names[note % 12]} ({pitch_classes:012b} - {chord_signature:012b})")
+                        return (chord_signature, note % 12, chord_name, chord_intervals)
+        return (0, -1, '', [])
 
     def _find_chords(self):
         chords_found = []
