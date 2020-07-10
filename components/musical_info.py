@@ -4,6 +4,8 @@
 import sys
 sys.path.append('..')
 
+from .colors import lab_to_rgb, rgb_to_lab
+
 class MusicDefs:
     INTVL_UNISON            = 1<<0  # Root Note / Tonic
     INTVL_MINOR_SECOND      = 1<<1  # 1 semitone
@@ -205,83 +207,6 @@ class MusicDefs:
     INTERVAL_NAMES =       [ 'I',     'ii',   'II',      'iii', 'III',   'IV',    'v',     'V',     'vi',    'VI',    'vii',   'VII' ]
 
 
-# Hue: angle in degrees (0-360)
-# Saturation: fraction between 0 and 1
-# Value: fraction between 0 and 1
-
-def hsv_to_rgb(hue, saturation=1., value=1.):
-    h = float(hue)
-    s = float(saturation)
-    v = float(value)
-    h60 = h / 60.0
-    h60f = math.floor(h60)
-    hi = int(h60f) % 6
-    f = h60 - h60f
-    p = v * (1 - s)
-    q = v * (1 - f * s)
-    t = v * (1 - (1 - f) * s)
-    r, g, b = 0, 0, 0
-    if   hi == 0: r, g, b = v, t, p
-    elif hi == 1: r, g, b = q, v, p
-    elif hi == 2: r, g, b = p, v, t
-    elif hi == 3: r, g, b = p, q, v
-    elif hi == 4: r, g, b = t, p, v
-    elif hi == 5: r, g, b = v, p, q
-    return r, g, b
-
-# Red: fraction between 0 and 1
-# Green: fraction between 0 and 1
-# Blue: fraction between 0 and 1
-
-def rgb_to_hsv(r, g, b):
-    mx = max(r, g, b)
-    mn = min(r, g, b)
-    df = mx - mn
-    if   mx == mn: h = 0
-    elif mx == r:  h = (60 * ((g-b)/df) + 360) % 360
-    elif mx == g:  h = (60 * ((b-r)/df) + 120) % 360
-    elif mx == b:  h = (60 * ((r-g)/df) + 240) % 360
-    if mx == 0:
-        s = 0
-    else:
-        s = (df/mx) * 100
-    v = mx * 100
-    return h, s, v
-
-def lab_to_rgb(l, a, b):
-    y = (l + 16.) / 116.
-    x = a / 500. + y
-    z = y - b / 200.
-
-    x = 0.95047 * ((x * x * x) if (x * x * x > 0.008856) else ((x - 16./116.) / 7.787))
-    y = 1.00000 * ((y * y * y) if (y * y * y > 0.008856) else ((y - 16./116.) / 7.787))
-    z = 1.08883 * ((z * z * z) if (z * z * z > 0.008856) else ((z - 16./116.) / 7.787))
-
-    r = x *  3.2406 + y * -1.5372 + z * -0.4986
-    g = x * -0.9689 + y *  1.8758 + z *  0.0415
-    b = x *  0.0557 + y * -0.2040 + z *  1.0570
-
-    r = (1.055 * (r**(1./2.4)) - 0.055) if (r > 0.0031308) else (12.92 * r)
-    g = (1.055 * (g**(1./2.4)) - 0.055) if (g > 0.0031308) else (12.92 * g)
-    b = (1.055 * (b**(1./2.4)) - 0.055) if (b > 0.0031308) else (12.92 * b)
-
-    return [ max(0., min(1., r)), max(0., min(1., g)), max(0., min(1., b)) ]
-
-def rgb_to_lab(r, g, b):
-    r = ((r + 0.055) / 1.055)**2.4 if (r > 0.04045) else (r / 12.92);
-    g = ((g + 0.055) / 1.055)**2.4 if (g > 0.04045) else (g / 12.92);
-    b = ((b + 0.055) / 1.055)**2.4 if (b > 0.04045) else (b / 12.92);
-
-    x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
-    y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.00000;
-    z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
-
-    x = x**(1./3.) if (x > 0.008856) else (7.787 * x) + 16/116.0;
-    y = y**(1./3.) if (y > 0.008856) else (7.787 * y) + 16/116.0;
-    z = z**(1./3.) if (z > 0.008856) else (7.787 * z) + 16/116.0;
-
-    return [(116. * y) - 16., 500. * (x - y), 200. * (y - z)]
-
 # This works for counting non-zero bits in 64-bit positive numbers
 def count_bits(n):
     n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)
@@ -362,6 +287,7 @@ class MusicalInfo():
         self.chord = 0
         self.chord_color = None
         self.chord_note = -1
+        self.symmetry = True
 
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
@@ -391,26 +317,38 @@ class MusicalInfo():
             self.thirds = self.minor_thirds | self.major_thirds
             self.fifths = chord >> 7 & chord & 0b111111111111
 
-            pattern = 0
-            if self.fifths:
-                pattern = self.fifths
-            elif self.thirds:
-                pattern = self.thirds
+            self.symmetry = ((chord >> 2) & 0b111111111111 == self.chord) or ((chord >> 3) & 0b111111111111 == self.chord) or \
+                            ((chord >> 4) & 0b111111111111 == self.chord) or ((chord >> 6) & 0b111111111111 == self.chord)
 
-            if chord:
-                if pattern:
-                    values = [((pattern | (pattern << 12)) >> v) & 0xFFF for v in range(12)]
-                    self.chord_note = min(range(len(values)), key=values.__getitem__)
+
+            pattern = 0
+            if not self.symmetry:
+                all_fifths = ((chord >> 6 & chord) | (chord >> 7 & chord) | (chord >> 8 & chord)) & 0b111111111111
+                all_thirds = ((chord >> 3 & chord) | (chord >> 4 & chord)) & 0b111111111111
+
+                if self.fifths:
+                    pattern = self.fifths
+                elif all_thirds:
+                    pattern = all_thirds
+                elif all_fifths:
+                    pattern = all_fifths
+
+                if chord:
+                    if pattern:
+                        values = [((pattern | (pattern << 12)) >> v) & 0xFFF for v in range(12)]
+                        self.chord_note = min(range(len(values)), key=values.__getitem__)
+                    else:
+                        self.chord_note = self.root_note % 12
                 else:
-                    self.chord_note = self.root_note % 12
+                    self.chord_note = -1
             else:
                 self.chord_note = -1
 
-        print(f"Chord: {chord & 0xFFF:03x} ~ {chord & 0xFFF:012b} -> Note: {self.chord_note}, " +
-              f"Major 3rds: {self.major_thirds:03x} ~ {self.major_thirds:012b}, " +
-              f"Minor 3rds: {self.minor_thirds:03x} ~ {self.minor_thirds:012b}, " +
-              f"All 3rds: {self.thirds:03x} ~ {self.thirds:012b}, 5ths: {self.fifths:03x} ~ {self.fifths:012b}, "
-              f"Pattern: {pattern:03x} ~ {pattern:012b}");
+            print(f"Chord: {chord & 0xFFF:03x} ~ {chord & 0xFFF:012b} -> Note: {self.chord_note}, " +
+                  f"Major 3rds: {self.major_thirds:03x} ~ {self.major_thirds:012b}, " +
+                  f"Minor 3rds: {self.minor_thirds:03x} ~ {self.minor_thirds:012b}, " +
+                  f"All 3rds: {self.thirds:03x} ~ {self.thirds:012b}, 5ths: {self.fifths:03x} ~ {self.fifths:012b}, "
+                  f"Pattern: {pattern:03x} ~ {pattern:012b}");
 
     def getChordColor(self):
         if self.chord_color is None:
@@ -424,18 +362,21 @@ class MusicalInfo():
         return self.chord_color
 
     def _get_chord_color(self, chord_intervals):
-        if not chord_intervals or self.chord_note < 0:
+        if not chord_intervals or not self.thirds:
             return lab_to_rgb(75., 0., 0.)
+
+        values = [((self.thirds | (self.thirds << 12)) >> v) & 0xFFF for v in range(12)]
+        chord_note = min(range(len(values)), key=values.__getitem__)
 
         axis_lr = (sum(chord_intervals) / len(chord_intervals) - 11./3) / 13.5
 
         vdif = [(((c * 7) % 12) - c / 7.) * 7. / 24. for c in chord_intervals]
         axis_ud = sum(vdif) / len(vdif) * 3. / 5.
 
-        vmaj = (self.major_thirds | (self.major_thirds << 12)) >> self.chord_note
+        vmaj = (self.major_thirds | (self.major_thirds << 12)) >> chord_note
         nmaj = [(1. / (n + 1) if (((vmaj | (vmaj << 12)) >> n) & 1) else 0.) for n in range(12)]
 
-        vmin = (self.minor_thirds | (self.minor_thirds << 12)) >> self.chord_note
+        vmin = (self.minor_thirds | (self.minor_thirds << 12)) >> chord_note
         nmin = [(1. / (n + 1) if (((vmin | (vmin << 12)) >> n) & 1) else 0.) for n in range(12)]
 
         axis_mm = 5. * (sum(nmaj) - sum(nmin) ) / len(chord_intervals)
