@@ -391,16 +391,27 @@ class MusicalInfo():
             self.thirds = self.minor_thirds | self.major_thirds
             self.fifths = chord >> 7 & chord & 0b111111111111
 
-            values = [((self.thirds | (self.thirds << 12)) >> v) & 0xFFF for v in range(12)]
+            if self.fifths:
+                pattern = self.fifths
+            elif self.thirds:
+                pattern = self.thirds
+            else:
+                pattern = 0
+
             if chord:
-                self.chord_note = min(range(len(values)), key=values.__getitem__)
+                if pattern:
+                    values = [((pattern | (pattern << 12)) >> v) & 0xFFF for v in range(12)]
+                    self.chord_note = min(range(len(values)), key=values.__getitem__)
+                else:
+                    self.chord_note = self.root_note % 12
             else:
                 self.chord_note = -1
 
-        #print(f"Chord: {chord & 0xFFF:03x} ~ {chord & 0xFFF:012b} -> Note: {self.chord_note}, " +
-        #      f"Major 3rds: {self.major_thirds:03x} ~ {self.major_thirds:012b}, " +
-        #      f"Minor 3rds: {self.minor_thirds:03x} ~ {self.minor_thirds:012b}, " +
-        #      f"All 3rds: {self.thirds:03x} ~ {self.thirds:012b}, 5ths: {self.fifths:03x} ~ {self.fifths:012b}");
+        print(f"Chord: {chord & 0xFFF:03x} ~ {chord & 0xFFF:012b} -> Note: {self.chord_note}, " +
+              f"Major 3rds: {self.major_thirds:03x} ~ {self.major_thirds:012b}, " +
+              f"Minor 3rds: {self.minor_thirds:03x} ~ {self.minor_thirds:012b}, " +
+              f"All 3rds: {self.thirds:03x} ~ {self.thirds:012b}, 5ths: {self.fifths:03x} ~ {self.fifths:012b}, "
+              f"Pattern: {pattern:03x} ~ {pattern:012b}");
 
     def getChordColor(self):
         if self.chord_color is None:
@@ -414,7 +425,7 @@ class MusicalInfo():
         return self.chord_color
 
     def _get_chord_color(self, chord_intervals):
-        if not chord_intervals:
+        if not chord_intervals or self.chord_note < 0:
             return lab_to_rgb(75., 0., 0.)
 
         axis_lr = (sum(chord_intervals) / len(chord_intervals) - 11./3) / 13.5

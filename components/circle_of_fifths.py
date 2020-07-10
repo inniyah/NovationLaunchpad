@@ -28,6 +28,11 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         xpos, ypos, width, height = rect.get_data()
         notes_in_scale = self.music_info.notes_in_scale
         root_note = self.music_info.root_note % 12
+        pitch_classes = self.music_info.pitch_classes
+        chord_color = self.music_info.getChordColor()
+        chord_color_dark = [v * 0.6 for v in chord_color]
+        chord_note = self.music_info.chord_note
+        chord = self.music_info.chord
 
         cx = xpos + width / 2.
         cy = ypos + height / 2.
@@ -44,6 +49,31 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
                 ctx.move_to(nx[n1], ny[n1])
                 ctx.line_to(nx[n2], ny[n2])
                 ctx.stroke()
+
+        if chord and chord_note >= 0:
+            n1 = chord_note
+            ctx.save()
+            ctx.set_source_rgb(*chord_color_dark)
+            ctx.set_line_width(50.0)
+            ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+            ctx.move_to(nx[chord_note], ny[chord_note])
+            ctx.line_to(nx[chord_note], ny[chord_note])
+            ctx.stroke()
+
+        #~ for chord_signature, chord_root, chord_name, chord_intervals in self.chords_found:
+            #~ if chord_intervals:
+                #~ chord_color = self.get_chord_color(chord_root, chord_intervals)
+                #~ ctx.set_source_rgb(*chord_color)
+                #~ ctx.set_line_width(50.0)
+                #~ ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+                #~ n1 = chord_root
+                #~ for d in chord_intervals + [chord_intervals[0]]:
+                    #~ n2 = (chord_root + d) % 12
+                    #~ ctx.move_to(nx[n1], ny[n1])
+                    #~ ctx.line_to(nx[n2], ny[n2])
+                    #~ ctx.stroke()
+                    #~ n1 = n2
+        #~ ctx.restore()
 
         #~ ctx.save()
         #~ for chord_signature, chord_root, chord_name, chord_intervals in self.chords_found:
@@ -86,7 +116,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         for n1 in range(12):
             for n_inc in [3, 4, 7]:
                 n2 = (n1 + n_inc) % 12
-                notes_pressed = (self.music_info.pitch_classes[n1] > 0 and self.music_info.pitch_classes[n2] > 0)
+                notes_pressed = (pitch_classes[n1] > 0 and pitch_classes[n2] > 0)
                 if notes_pressed:
                     ctx.set_source_rgb(0.3, 0.3, 0.3)
                     ctx.set_line_width(6.0)
@@ -95,7 +125,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
                     ctx.stroke()
 
         for n in range(12):
-            is_pressed = self.music_info.pitch_classes[n]
+            is_pressed = pitch_classes[n]
 
             if notes_in_scale[n % 12]:
                 note_radius = 15
