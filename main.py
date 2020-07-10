@@ -33,6 +33,7 @@ from components.circle_of_fifths   import CircleOfFifthsElement
 from components.tonal_map          import TonalMapElement
 from components.musical_info       import MusicDefs, MusicalInfo
 from components.event_device       import EventDeviceManager
+from components.music_staff        import MusicStaffElement
 
 import components.fluidsynth as fluidsynth
 
@@ -112,8 +113,8 @@ class MainWindow(Gtk.Window):
         self.rect = layout.datatypes.Rectangle(0, 0, min_width, min_height)
         self.init_ui()
 
-        rsvg_handle = Rsvg.Handle()
-        #~ self.svg = rsvg_handle.new_from_file("CircleOfTriads.svg")
+        #~ rsvg_handle = Rsvg.Handle()
+        #~ self.svg = rsvg_handle.new_from_file(os.path.join("artwork", "CircleOfFifths.svg"))
 
     def init_ui(self):
         darea = Gtk.DrawingArea()
@@ -258,13 +259,15 @@ def main():
     dthirds = DiagramOfThirdsElement(music_info)
     cfifths = CircleOfFifthsElement(music_info)
     tonalmap = TonalMapElement(music_info)
+    musicstaff = MusicStaffElement(music_info)
 
     box = layout.BoxLM()
     box.left = lpad
     box.bottom = piano
     #~ box.center = tonalmap
     box.center = dthirds
-    box.top = DummyElement(50, 10)
+    #~ box.top = DummyElement(50, 10)
+    box.top = musicstaff
     box.right = cfifths
     box.margin = 1
 
