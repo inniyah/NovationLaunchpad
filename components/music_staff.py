@@ -20,7 +20,8 @@ from .musical_info import MusicDefs
 
 class MusicStaffElement(layout.root.LayoutElement):
 
-    SCORE_MIN_NOTE, SCORE_MAX_NOTE = 36, 84 # from C2 to C6, both included
+    MIN_NOTE, MAX_NOTE = 36, 84 # from C2 to C6, both included
+    SCORE_MIN_NOTE, SCORE_MAX_NOTE, SCORE_MID_NOTE = 42, 78, 60
     SCORE_LINES = (43, 47, 50, 53, 57, 64, 67, 71, 74, 77) # G2, B2, D3, F3, A3, E4, G4, B4, D5, F5
     DIATONIC_NOTES = { 0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 6 }
 
@@ -103,21 +104,35 @@ class MusicStaffElement(layout.root.LayoutElement):
         vp.x, vp.y = score_xpos, score_ypos + self.yslot_for_note(62) * yslot_height
         self.clefs_svg.render_element(ctx, "#bass", vp)
 
-        for note in range(self.SCORE_MIN_NOTE, self.SCORE_MAX_NOTE + 1):
+        max_note = self.SCORE_MAX_NOTE
+        for note in range(self.MAX_NOTE, max_note, -1):
             if self.music_info.keys_pressed[note]:
-                x = cx
-                yslot = self.yslot_for_note(note)
-                y = score_ypos + yslot * yslot_height
+                max_note = note
+                break
 
-                ledger_line = (yslot % 2) == 0 and note not in self.SCORE_LINES
+        min_note = self.SCORE_MIN_NOTE
+        for note in range(self.MIN_NOTE, min_note - 1, 1):
+            if self.music_info.keys_pressed[note]:
+                min_note = note
+                break
 
-                if ledger_line:
-                    ctx.set_source_rgb(0., 0., 0.)
+        for note in range(self.MIN_NOTE, self.MAX_NOTE + 1):
+            x = cx
+            yslot = self.yslot_for_note(note)
+            y = score_ypos + yslot * yslot_height
+
+            if (yslot % 2) == 0:
+                ledger_line = note > self.SCORE_MAX_NOTE and note <= max_note
+
+                if (note > self.SCORE_MAX_NOTE and note <= max_note) or (note < self.SCORE_MIN_NOTE and note >= min_note) or (note == self.SCORE_MID_NOTE and self.music_info.keys_pressed[note]):
+                    ctx.set_source_rgb(0.0, 0.1, 0.3)
                     ctx.set_line_width(1)
                     ctx.move_to(x - 6, y)
                     ctx.line_to(x + 6, y)
                     ctx.stroke()
 
+            if self.music_info.keys_pressed[note]:
+                ctx.set_source_rgb(0.0, 0.0, 0.0)
                 ctx.arc(x, y, 4, 0, 2. * math.pi)
                 ctx.fill()
 
