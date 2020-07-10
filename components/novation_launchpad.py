@@ -196,12 +196,13 @@ class LaunchpadManager:
                 lpbox.setCodeColor(button_num, color_code)
 
     def _run(self, lpbox, midi_out):
-        if self.mode is None: # No Launchpads were found
-            return
-
         print("~ Running LaunchpadManager Thread")
 
         self.setup()
+
+        if self.mode is None: # No Launchpads were found
+            return
+
         self.init_colors(lpbox)
 
         # Clear the buffer because the Launchpad remembers everything :-)
