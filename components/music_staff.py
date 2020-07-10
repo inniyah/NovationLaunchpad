@@ -104,20 +104,21 @@ class MusicStaffElement(layout.root.LayoutElement):
         self.clefs_svg.render_element(ctx, "#bass", vp)
 
         for note in range(self.SCORE_MIN_NOTE, self.SCORE_MAX_NOTE + 1):
-            x = cx + 10 * (note % 12)
-            yslot = self.yslot_for_note(note)
-            y = score_ypos + yslot * yslot_height
+            if self.music_info.keys_pressed[note]:
+                x = cx
+                yslot = self.yslot_for_note(note)
+                y = score_ypos + yslot * yslot_height
 
-            ledger_line = note not in self.SCORE_LINES
+                ledger_line = (yslot % 2) == 0 and note not in self.SCORE_LINES
 
-            if ledger_line:
-                ctx.set_source_rgb(0., 0., 0.)
-                ctx.set_line_width(1)
-                ctx.move_to(x - 6, y)
-                ctx.line_to(x + 6, y)
-                ctx.stroke()
+                if ledger_line:
+                    ctx.set_source_rgb(0., 0., 0.)
+                    ctx.set_line_width(1)
+                    ctx.move_to(x - 6, y)
+                    ctx.line_to(x + 6, y)
+                    ctx.stroke()
 
-            ctx.arc(x, y, 4, 0, 2. * math.pi)
-            ctx.fill()
+                ctx.arc(x, y, 4, 0, 2. * math.pi)
+                ctx.fill()
 
         ctx.restore()
