@@ -391,12 +391,11 @@ class MusicalInfo():
             self.thirds = self.minor_thirds | self.major_thirds
             self.fifths = chord >> 7 & chord & 0b111111111111
 
+            pattern = 0
             if self.fifths:
                 pattern = self.fifths
             elif self.thirds:
                 pattern = self.thirds
-            else:
-                pattern = 0
 
             if chord:
                 if pattern:
