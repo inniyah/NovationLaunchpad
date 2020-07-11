@@ -25,6 +25,26 @@ class MusicStaffElement(layout.root.LayoutElement):
     SCORE_LINES = (43, 47, 50, 53, 57, 64, 67, 71, 74, 77) # G2, B2, D3, F3, A3, E4, G4, B4, D5, F5
     DIATONIC_NOTES = { 0: 0, 1: 0, 2: 1, 3: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 5, 11: 6 }
 
+    MAJOR_KEY_SIGNATURES = {
+            0:  ( 0,  0,  0,  0,  0,  0,  0 ), # C Major
+
+            #    Cb  Db  Eb  Fb  Gb  Ab  Bb
+            5:  ( 0,  0,  0,  0,  0,  0, -1 ), # F Major
+            10: ( 0,  0, -1,  0,  0,  0, -1 ), # Bb Major
+            3:  ( 0,  0, -1,  0,  0, -1, -1 ), # Eb Major
+            8:  ( 0, -1, -1,  0,  0, -1, -1 ), # Ab Major
+            1:  ( 0, -1, -1,  0, -1, -1, -1 ), # Db Major
+            6:  (-1, -1, -1,  0, -1, -1, -1 ), # Gb Major
+
+            #     C#  D#  E#  F#  G#  A#  B#
+            7:  ( 0,  0,  0,  1,  0,  0,  0 ), # G Major
+            2:  ( 1,  0,  0,  1,  0,  0,  0 ), # D Major
+            9:  ( 1,  0,  0,  1,  1,  0,  0 ), # A Major
+            4:  ( 1,  1,  0,  1,  1,  0,  0 ), # E Major
+            11: ( 1,  1,  0,  1,  1,  1,  0 ), # B Major
+            6:  ( 1,  1,  1,  1,  1,  1,  0 ), # F# Major
+    }
+
     def __init__(self, music_info):
         self.music_info = music_info
         self.border_gap = 10.
