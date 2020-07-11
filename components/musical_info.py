@@ -325,24 +325,26 @@ class MusicalInfo():
 
             pattern = 0
             if not self.symmetry:
-                all_fifths = ((chord >> 6 & chord) | (chord >> 7 & chord) | (chord >> 8 & chord)) & 0b111111111111
-                all_thirds = ((chord >> 3 & chord) | (chord >> 4 & chord)) & 0b111111111111
+                self.chord_note = chord_note
 
-                if self.fifths:
-                    pattern = self.fifths
-                elif all_thirds:
-                    pattern = all_thirds
-                elif all_fifths:
-                    pattern = all_fifths
+                #~ all_fifths = ((chord >> 6 & chord) | (chord >> 7 & chord) | (chord >> 8 & chord)) & 0b111111111111
+                #~ all_thirds = ((chord >> 3 & chord) | (chord >> 4 & chord)) & 0b111111111111
 
-                if chord:
-                    if pattern:
-                        values = [((pattern | (pattern << 12)) >> v) & 0xFFF for v in range(12)]
-                        self.chord_note = min(range(len(values)), key=values.__getitem__)
-                    else:
-                        self.chord_note = self.root_note % 12
-                else:
-                    self.chord_note = -1
+                #~ if self.fifths:
+                    #~ pattern = self.fifths
+                #~ elif all_thirds:
+                    #~ pattern = all_thirds
+                #~ elif all_fifths:
+                    #~ pattern = all_fifths
+
+                #~ if chord:
+                    #~ if pattern:
+                        #~ values = [((pattern | (pattern << 12)) >> v) & 0xFFF for v in range(12)]
+                        #~ self.chord_note = min(range(len(values)), key=values.__getitem__)
+                    #~ else:
+                        #~ self.chord_note = self.root_note % 12
+                #~ else:
+                    #~ self.chord_note = -1
             else:
                 self.chord_note = -1
 
