@@ -287,6 +287,7 @@ class MusicalInfo():
         self.chord = 0
         self.chord_color = None
         self.chord_note = -1
+        self.num_notes_in_chord = 0
         self.symmetry = True
 
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
@@ -310,6 +311,7 @@ class MusicalInfo():
             print(f"Pitch class histogram: {chord:#06x} = {chord:>012b}")
             self.chord_color = None
             self.chord = chord
+            self.num_notes_in_chord = count_bits(chord)
 
             chord_signature, chord_note, chord_name, chord_intervals = self._find_chord()
 
@@ -401,40 +403,6 @@ class MusicalInfo():
             #print(f"{inc_note}, {inc_x}, {inc_y}: {note_value} -> {self.notes_in_scale[note_value]}")
         return notes_in_scale
 
-    def _combine_chords(self, chords):
-        if not chords:
-            return chords
-
-        combined_chords = []
-
-        #for chord_signature, chord_root, chord_name, chord_intervals in chords:
-        #    print(f"<<< Individual: {chord_signature:03x} ~ {chord_signature:012b}: {chord_root} {chord_name} {chord_intervals}")
-
-        while chords:
-            combined_signature, combined_root, combined_name, combined_intervals = chords.pop(0)
-            print(f"Starting: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {combined_intervals}")
-            combined_intervals = set(combined_intervals)
-            pending_chords = []
-            while chords:
-                if (combined_signature & chords[0][0]) == chords[0][0]:
-                    print(f"Discarding: {chords[0][0]:03x} ~ {chords[0][0]:012b}: {chords[0][1]} {chords[0][2]} {chords[0][3]}")
-                    chords.pop(0)
-                elif (combined_signature & chords[0][0]) != 0:
-                    chord_signature, chord_root, chord_name, chord_intervals = chords.pop(0)
-                    print(f"Combining: {chord_signature:03x} ~ {chord_signature:012b}: {chord_root} {chord_name} {chord_intervals}")
-                    combined_signature |= chord_signature
-                    combined_intervals |= set([i + ((chord_root - combined_root) % 12) for i in chord_intervals])
-                    combined_name += f" + {chord_name} on {chord_root}"
-                else:
-                    pending_chords.append(chords.pop(0))
-            combined_chords.append((combined_signature, combined_root, combined_name, sorted(combined_intervals)))
-            print(f"Final: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {sorted(combined_intervals)}")
-            chords = pending_chords
-
-        for combined_signature, combined_root, combined_name, combined_intervals in combined_chords:
-            print(f" >>> Combined: {combined_signature:03x} ~ {combined_signature:012b}: {combined_root} {combined_name} {combined_intervals}")
-        return combined_chords
-
     def _find_chord(self):
         pitch_classes = self.chord
         for chords_list in self.CHORDS_INFO:
@@ -446,29 +414,3 @@ class MusicalInfo():
                         print(f"Found: {chord_name} on {self.note_names[note % 12]} ({pitch_classes:012b} - {chord_signature:012b})")
                         return (chord_signature, note % 12, chord_name, chord_intervals)
         return (0, -1, '', [])
-
-    def _find_chords(self):
-        chords_found = []
-
-        #pitch_classes = 0
-        #for num_note in range(0, 12):
-        #    value = 1 << (num_note % 12)
-        #    if self.pitch_classes_active[num_note] > 0:
-        #        pitch_classes |= value
-
-        pitch_classes = self.chord
-        comp_chord_signature = 0
-
-        for chords_list in self.CHORDS_INFO:
-            for n in range(12):
-                for chord_signatures, chord_intervals, chord_name in chords_list:
-                    note = (self.root_note + n * 7) % 12
-                    chord_signature = chord_signatures[note]
-                    if (pitch_classes & chord_signature) == chord_signature:
-                        chords_found.append((chord_signature, note % 12, chord_name, chord_intervals))
-                        #print("Found: {} on {} ({:012b} - {:012b} -> {:012b})".format(chord_name, self.note_names[note % 12],
-                        #    pitch_classes, chord_signature, pitch_classes & ~chord_signature))
-                        comp_chord_signature |= chord_signature
-                        #pitch_classes &= ~chord_signature
-
-        return self._combine_chords(chords_found)
