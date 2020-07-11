@@ -28,6 +28,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         xpos, ypos, width, height = rect.get_data()
         notes_in_scale = self.music_info.notes_in_scale
         root_note = self.music_info.root_note % 12
+        notes_in_scale = self.music_info.notes_in_scale
         pitch_classes = self.music_info.pitch_classes
         chord_color = self.music_info.getChordColor()
         chord_color_dark = [v * 0.6 for v in chord_color]
@@ -84,17 +85,6 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         #~ for n1 in range(12):
             #~ for n_inc in [3, 4]:
                 #~ n2 = (n1 + n_inc) % 12
-                #~ notes_in_scale = (self.notes_in_scale[n1] and self.notes_in_scale[n2])
-                #~ if notes_in_scale:
-                    #~ ctx.set_source_rgb(0.5, 0.5, 0.5)
-                    #~ ctx.set_line_width(2.0)
-                    #~ ctx.move_to(nx[n1], ny[n1])
-                    #~ ctx.line_to(nx[n2], ny[n2])
-                    #~ ctx.stroke()
-
-        #~ for n1 in range(12):
-            #~ for n_inc in [3, 4]:
-                #~ n2 = (n1 + n_inc) % 12
                 #~ notes_pressed = (self.pitch_classes_active[n1] > 0 and self.pitch_classes_active[n2] > 0)
                 #~ if notes_pressed:
                     #~ ctx.set_source_rgb(0.3, 0.3, 0.3)
@@ -125,6 +115,17 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
             ctx.move_to(nx[chord_note], ny[chord_note])
             ctx.line_to(nx[chord_note], ny[chord_note])
             ctx.stroke()
+
+        for n1 in range(12):
+            for n_inc in [3, 4, 7]:
+                n2 = (n1 + n_inc) % 12
+                notes_are_in_scale = (notes_in_scale[n1] and notes_in_scale[n2])
+                if notes_are_in_scale:
+                    ctx.set_source_rgb(0.5, 0.5, 0.5)
+                    ctx.set_line_width(2.0)
+                    ctx.move_to(nx[n1], ny[n1])
+                    ctx.line_to(nx[n2], ny[n2])
+                    ctx.stroke()
 
         for n1 in range(12):
             for n_inc in [3, 4, 7]:

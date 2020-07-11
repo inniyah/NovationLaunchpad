@@ -389,16 +389,6 @@ class MusicalInfo():
 
         return chord_color
 
-    def _check_chord(self, chord, note=(0,0,0)):
-        base_note, base_x, base_y = note
-        notes_in_scale = True
-        for inc_note, inc_x, inc_y in chord:
-            note_value = (base_note + self.get_note_from_coords(base_x + inc_x, base_y + inc_y) % 12)
-            if not self.notes_in_scale[note_value]:
-                notes_in_scale = False
-            #print(f"{inc_note}, {inc_x}, {inc_y}: {note_value} -> {self.notes_in_scale[note_value]}")
-        return notes_in_scale
-
     def _find_chord(self):
         pitch_classes = self.chord
         for chords_list in self.CHORDS_INFO:
