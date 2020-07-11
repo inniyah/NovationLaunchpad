@@ -117,7 +117,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
                     ctx.line_to(nx[n2], ny[n2])
                     ctx.stroke()
 
-        if chord_was_drawn and chord_note >= 0:
+        if chord_was_drawn and chord_note >= 0 and pitch_classes[chord_note]:
             n1 = chord_note
             ctx.set_source_rgb(*chord_color_dark)
             ctx.set_line_width(52.0)
