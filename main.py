@@ -13,6 +13,8 @@ import time
 import random
 import argparse
 
+from threading import Thread, Lock
+
 from gi.repository import Gtk
 from gi.repository import Rsvg
 
@@ -26,6 +28,7 @@ try:
 except:
     evdev = None
 
+from components.general_midi       import MIDI_GM1_INSTRUMENT_NAMES, MIDI_PERCUSSION_NAMES
 from components.piano_keyboard     import KeyboardManager, PianoElement
 from components.novation_launchpad import LaunchpadManager, LaunchpadElement, LAUNCHPAD_LAYOUTS
 from components.diagram_of_thirds  import DiagramOfThirdsElement
@@ -34,6 +37,7 @@ from components.tonal_map          import TonalMapElement
 from components.musical_info       import MusicDefs, MusicalInfo
 from components.event_device       import EventDeviceManager
 from components.music_staff        import MusicStaffElement
+from components.midi_file_player   import MidiFileSoundPlayer
 
 import components.fluidsynth as fluidsynth
 
@@ -160,6 +164,7 @@ class MidiOutput:
             self.fs.program_select(channel, self.sfid, 0, 0)
 
         self.elements = elements
+        self.channel_programs = [0] * 16
 
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing MidiOutput")
@@ -213,6 +218,13 @@ class MidiOutput:
         for element in self.elements:
             element.playNote(channel, note, velocity)
 
+
+    def change_program(self, channel, program):
+        self.channel_programs[channel] = program
+        self.fs.program_select(channel, self.sfid, 0, program)
+        print(f"Program for {channel} changed to {program} ('{MIDI_GM1_INSTRUMENT_NAMES[program + 1]}')")
+
+
 def printInfo():
     if rtmidi:
         midi_in = rtmidi.MidiIn()
@@ -241,8 +253,9 @@ def main():
     parser.add_argument('-m', '--midi-out', help="MIDI output port name to create", dest='port_name', default="LaunchpadMidi")
     parser.add_argument('-l', '--layout', help="Launchpad Layout", dest='layout', default="III_iii")
     parser.add_argument('-e', '--event-device', help="Input keyboard device", dest='evdev', action='append', nargs='+')
+    parser.add_argument('-f', '--file', help="Play MIDI file", dest='file', default=None)
     parser.add_argument('-i', '--info', help="Print info", dest='info', action='store_true')
-    parser.add_argument("-v", "--verbose", dest='verbose', action="count", default=0)
+    parser.add_argument('-v', "--verbose", dest='verbose', action="count", default=0)
     args = parser.parse_args()
 
     if args.verbose:
@@ -284,6 +297,14 @@ def main():
     if evdev and args.evdev:
         evdev_manager = EventDeviceManager(sum(args.evdev, []), midi_out)
         evdev_manager.start()
+
+    midi_file_player = None
+    midi_file_player_thread = None
+    if args.file:
+        midi_file_player = MidiFileSoundPlayer(midi_out)
+        midi_file_player.load_file(args.file)
+        midi_file_player_thread = Thread(target = midi_file_player.play)
+        midi_file_player_thread.start()
 
     #~ music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
