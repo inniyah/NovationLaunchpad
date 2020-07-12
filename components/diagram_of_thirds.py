@@ -23,10 +23,11 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         self.num_notes = self.last_note - self.first_note + 1
 
         self.step_size = 10
-        self.border_gap = 10.
+        self.border_hgap = 10.
+        self.border_vgap = 18.
 
-        height = 400 + self.border_gap * 2
-        width = self.step_size * self.num_notes + self.border_gap * 2
+        height = 260 + self.border_vgap * 2
+        width = self.step_size * (self.num_notes + 1) + self.border_hgap * 2
         self.size = layout.datatypes.Point(width, height)
 
     def get_minimum_size(self, ctx):
@@ -41,8 +42,8 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         chord_note = self.music_info.chord_note
 
         note_radius = 12
-        base_y = ypos + height - self.border_gap - note_radius
-        effective_h = (height - 2. * self.border_gap - 2. * note_radius)
+        base_y = ypos + height - self.border_vgap - note_radius
+        effective_h = (height - 2. * self.border_vgap - 2. * note_radius)
 
         ctx.save()
 
@@ -51,11 +52,11 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
 
         for i in range(self.num_notes):
             n = self.first_note + i
-            x = xpos + self.border_gap + self.step_size * (i + 1)
+            x = xpos + self.border_hgap + self.step_size * (i + 1)
 
             ctx.set_source_rgb(0.9, 0.9, 0.9)
-            ctx.move_to(x, ypos + self.border_gap)
-            ctx.line_to(x, ypos + height - self.border_gap)
+            ctx.move_to(x, ypos + self.border_vgap)
+            ctx.line_to(x, ypos + height - self.border_vgap)
             ctx.stroke()
 
 
@@ -66,7 +67,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
 
         for i in range(-7, self.num_notes):
             n = self.first_note + i
-            x = xpos + self.border_gap + self.step_size * (i + 1)
+            x = xpos + self.border_hgap + self.step_size * (i + 1)
 
             y_steps = ((n * 7 + self.central_voffset) % 24)
             y = base_y - y_step_height * y_steps
@@ -96,7 +97,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         if chord_was_drawn:
             for i in range(-7, self.num_notes):
                 n = self.first_note + i
-                x = xpos + self.border_gap + self.step_size * (i + 1)
+                x = xpos + self.border_hgap + self.step_size * (i + 1)
 
                 y_steps = ((n * 7 + self.central_voffset) % 24)
                 y = base_y - y_step_height * y_steps
@@ -117,7 +118,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         y_step_height = effective_h / 23.
         for i in range(self.num_notes):
             n = self.first_note + i
-            x = xpos + self.border_gap + self.step_size * (i + 1)
+            x = xpos + self.border_hgap + self.step_size * (i + 1)
 
             y_steps = ((n * 7 + self.central_voffset) % 24)
             y = base_y - y_step_height * y_steps
@@ -143,7 +144,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         y_step_height = effective_h / 23.
         for i in range(self.num_notes):
             n = self.first_note + i
-            x = xpos + self.border_gap + self.step_size * (i + 1)
+            x = xpos + self.border_hgap + self.step_size * (i + 1)
 
             y_steps = ((n * 7 + self.central_voffset) % 24)
             y = base_y - y_step_height * y_steps
