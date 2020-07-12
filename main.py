@@ -310,6 +310,7 @@ def main():
 
     Gtk.main()
 
+    if midi_file_player: midi_file_player.stop()
     if lp_manager: lp_manager.stop()
     if evdev_manager: evdev_manager.stop()
 

@@ -31,6 +31,7 @@ class MidiFileSoundPlayer():
         self.full_song = {}
         self.instruments = set()
         self.music_key_per_bar = None
+        self.running = False
 
     def load_file(self, filename):
         self.midi_file = mido.MidiFile(filename)
@@ -156,9 +157,14 @@ class MidiFileSoundPlayer():
         #~ del self.fs
         pass
 
+    def stop(self):
+        self.running = False
+
     def play(self):
         if self.midi_file.type == 2: # Can't merge tracks in type 2 (asynchronous) file
             return
+
+        self.running = True
 
         #~ if self.keyboard_handlers:
             #~ for keyboard_handler in self.keyboard_handlers:
@@ -217,6 +223,9 @@ class MidiFileSoundPlayer():
         print(f"beat@{count_ticks_in_total}: {num_beat} -> {pitch_classes_in_beat:#06x} = {pitch_classes_in_beat:>012b}")
 
         for message in mido.midifiles.tracks.merge_tracks(self.midi_file.tracks):
+            if not self.running:
+                break
+
             total_ticks_in_beat = ticks_per_beat * 4 / time_signature_denominator
             total_ticks_in_measure = ticks_per_beat * time_signature_numerator * 4 / time_signature_denominator
 
