@@ -125,7 +125,7 @@ class MainWindow(Gtk.Window):
         darea.connect("draw", self.on_draw)
         self.add(darea)
 
-        self.set_title("GTK window")
+        self.set_title("Launchpad Player")
         self.resize(self.rect.w, self.rect.h)
         self.set_position(Gtk.WindowPosition.CENTER)
         self.connect("delete-event", Gtk.main_quit)
@@ -148,6 +148,29 @@ class MainWindow(Gtk.Window):
         time.sleep(0.05)
         self.queue_draw()
 
+class MidiRouter:
+    def __init__(self):
+        self.ports = {}
+
+    def add_port(self, channel, destination, new_channel):
+        self.ports[channel] = (destination, new_channel)
+
+    def __del__(self):
+        # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+        pass
+
+    def play_note(self, channel, note, velocity):
+        port_data = self.ports.get(channel)
+        if port_data:
+            destination, new_channel = port_data
+            destination.play_note(new_channel, note, velocity)
+
+    def change_program(self, channel, program):
+        port_data = self.ports.get(channel)
+        if port_data:
+            destination, new_channel = port_data
+            destination.change_program(new_channel, program)
+
 class MidiOutput:
     def __init__(self, port_name, elements):
         self.port_name = port_name
@@ -166,7 +189,8 @@ class MidiOutput:
         self.elements = elements
         self.channel_programs = [0] * 16
 
-    def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
+    def __del__(self):
+        # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing MidiOutput")
         self.fs.delete()
         print("~ FluidSynth Closed")
@@ -298,10 +322,18 @@ def main():
         evdev_manager = EventDeviceManager(sum(args.evdev, []), midi_out)
         evdev_manager.start()
 
+    midi_file_out = midi_out
+
+    #~ midi_file_out = MidiRouter()
+    #~ midi_file_out.add_port(0, piano_manager, 10)
+    #~ midi_file_out.add_port(1, piano_manager, 11)
+    #~ midi_file_out.add_port(3, lp_manager, 12)
+    #~ midi_file_out.add_port(4, piano_manager, 12)
+
     midi_file_player = None
     midi_file_player_thread = None
     if args.file:
-        midi_file_player = MidiFileSoundPlayer(midi_out)
+        midi_file_player = MidiFileSoundPlayer(midi_file_out)
         midi_file_player.load_file(args.file)
         midi_file_player_thread = Thread(target = midi_file_player.play)
         midi_file_player_thread.start()

@@ -95,7 +95,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
 
         chord_was_drawn = False
         for n1 in range(12):
-            for n_inc in range(n1, 12):
+            for n_inc in range(12):
                 n2 = (n1 + n_inc) % 12
                 notes_pressed = (pitch_classes[n1] > 0 and pitch_classes[n2] > 0)
                 if notes_pressed:

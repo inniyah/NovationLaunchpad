@@ -67,6 +67,10 @@ class LaunchpadManager:
         self.scale = None
         self.root_note = None
 
+        self.lpbox = lpbox
+        self.midi_out = midi_out
+        self.notes_cache = {}
+
     def __del__(self): # See:https://eli.thegreenplace.net/2009/06/12/safely-using-destructors-in-python/
         print("~ Closing LaunchpadManager")
         self.finish()
@@ -193,7 +197,19 @@ class LaunchpadManager:
 
                 self.button_colors[button_num] = color_code
                 self.lp.LedCtrlRawByCode(button_num, color_code)
-                lpbox.setCodeColor(button_num, color_code)
+                lpbox.setCodeColor(button_num, color_code, False)
+
+    def init_notes_cache(self, root_note, lp_layout):
+        self.notes_cache = {}
+        for y in range(1, 9):
+            for x in range(1, 9):
+                note = root_note + lp_layout(x - 1, y - 1)
+                button_num = x + y * 10
+                old_button_num = self.notes_cache.get(note)
+                if not old_button_num is None:
+                    if abs(old_button_num % 10 - 5) + abs(old_button_num // 10 - 5) < abs(button_num % 10 - 5) + abs(button_num // 10 - 5):
+                        button_num = old_button_num
+                self.notes_cache[note] = button_num
 
     def _run(self, lpbox, midi_out):
         print("~ Running LaunchpadManager Thread")
@@ -204,6 +220,7 @@ class LaunchpadManager:
             return
 
         self.init_colors(lpbox)
+        self.init_notes_cache(lpbox.music_info.root_note, lpbox.lp_layout)
 
         # Clear the buffer because the Launchpad remembers everything :-)
         self.lp.ButtonFlush()
@@ -235,12 +252,12 @@ class LaunchpadManager:
                 if but[1]:
                     self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
-                        lpbox.setCodeColor(but[0], c)
+                        lpbox.setCodeColor(but[0], c, True)
                 else:
                     c = self.button_colors[but[0]]
                     self.lp.LedCtrlRawByCode(but[0], c)
                     if lpbox:
-                        lpbox.setCodeColor(but[0], c)
+                        lpbox.setCodeColor(but[0], c, False)
             else:
                 time.sleep(0.001 * 5)
 
@@ -256,6 +273,37 @@ class LaunchpadManager:
         self.running = False
         if self.thread:
             self.thread.join()
+
+    # For inputs from MidiRouter
+    def play_note(self, channel, note, velocity):
+        note = 60 + ((note + 4) % 12) - 4
+        pressed = (velocity != 0)
+        pitch_class = note % 12
+        octave = note // 12
+        print(f"[External Launchpad MIDI Rcv] ({pressed}, {note}, {octave}, {pitch_class}, {velocity})")
+
+        button = self.notes_cache.get(note)
+        c = self.COLOR_CODES_FOR_NOTES[(note * 7) % 12] - 2
+
+        if not button is None:
+            if pressed:
+                self.lp.LedCtrlRawByCode(button, c)
+                if self.lpbox:
+                    self.lpbox.setCodeColor(button, c, True)
+            else:
+                c = self.button_colors[button]
+                self.lp.LedCtrlRawByCode(button, c)
+                if self.lpbox:
+                    self.lpbox.setCodeColor(button, c, False)
+
+        if self.midi_out:
+            self.midi_out.play_note(channel, note, velocity)
+
+    # For inputs from MidiRouter
+    def change_program(self, channel, program):
+        print(f"[External Launchpad MIDI ChgPrg] ({channel}, {program})")
+        if self.midi_out:
+            self.midi_out.change_program(channel, program)
 
 class LaunchpadElement(layout.root.LayoutElement):
     def __init__(self, music_info, lp_layout):
@@ -275,6 +323,7 @@ class LaunchpadElement(layout.root.LayoutElement):
         self.null_color = (0.7, 0.8, 0.8)
         self.color = [self.null_color] * self.max_pos
         self.label = ['xx'] * self.max_pos
+        self.highlight = [False] * self.max_pos
 
         height = (self.cols + 1) * self.sq_width + self.cols * self.sq_hgap + self.border_gap * 2
         width  = (self.rows + 1) * self.sq_height + self.rows * self.sq_vgap + self.border_gap * 2
@@ -298,7 +347,9 @@ class LaunchpadElement(layout.root.LayoutElement):
             for button_x in range(self.cols):
                 x1 = xpos + button_x * (self.sq_width + self.sq_hgap)
                 x2 = x1 + self.sq_width
-                color = self.color[button_x + (7 - button_y) * 10]
+                array_pos = button_x + (7 - button_y) * 10
+                color = self.color[array_pos]
+                highlight = self.highlight[array_pos]
 
                 ctx.move_to(x1, y1)
                 ctx.line_to(x2, y1)
@@ -307,8 +358,12 @@ class LaunchpadElement(layout.root.LayoutElement):
                 ctx.close_path()
                 ctx.set_source_rgb(*color)
                 ctx.fill_preserve()
-                ctx.set_source_rgb(*border)
-                ctx.set_line_width(1)
+                if not highlight:
+                    ctx.set_source_rgb(*border)
+                    ctx.set_line_width(1)
+                else:
+                    ctx.set_source_rgb(0., 0., 0.)
+                    ctx.set_line_width(3)
                 ctx.stroke()
 
                 #~ label = self.label[button_x + (7 - button_y) * 10]
@@ -352,10 +407,11 @@ class LaunchpadElement(layout.root.LayoutElement):
     def setRgbColor(self, pos, r, g, b):
         pass
 
-    def setCodeColor(self, pos, i):
+    def setCodeColor(self, pos, i, highlight=False):
         if pos >= 104 and pos <= 111: pos -= 13
         x = pos % 10 - 1
         y = pos // 10 - 1
+        self.highlight[x + y * 10] = highlight
         if i > 0 and i < len(LAUNCHPAD_COLORS):
             self.color[x + y * 10] = LAUNCHPAD_COLORS[i]
         else:

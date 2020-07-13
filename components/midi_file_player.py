@@ -166,6 +166,8 @@ class MidiFileSoundPlayer():
 
         self.running = True
 
+        #~ time.sleep(15)
+
         #~ if self.keyboard_handlers:
             #~ for keyboard_handler in self.keyboard_handlers:
                 #~ keyboard_handler.set_song_score(self.full_song)

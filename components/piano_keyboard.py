@@ -72,6 +72,25 @@ class KeyboardManager:
             if self.midi_out:
                 self.midi_out.play_note(channel, note, velocity)
 
+    # For inputs from MidiRouter
+    def play_note(self, channel, note, velocity):
+        pressed = (velocity != 0)
+        pitch_class = note % 12
+        octave = note // 12
+
+        print(f"[External Piano MIDI Rcv] ({pressed}, {note}, {octave}, {pitch_class}, {velocity})")
+        if self.piano:
+            self.piano.pressOrReleaseKey(channel, note, pressed)
+        if self.midi_out:
+            self.midi_out.play_note(channel, note, velocity)
+
+    # For inputs from MidiRouter
+    def change_program(self, channel, program):
+        print(f"[External Piano MIDI ChgPrg] ({channel}, {program})")
+        if self.midi_out:
+            self.midi_out.change_program(channel, program)
+
+
 class PianoElement(layout.root.LayoutElement):
     WHITE_KEYS = set([0, 2, 4, 5, 7, 9, 11])
 
