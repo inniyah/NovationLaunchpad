@@ -99,8 +99,8 @@ class PianoElement(layout.root.LayoutElement):
 
         self.white_key_width = 18.
         self.white_key_height = 100.
-        self.octave_start = 0
-        self.num_octaves = 9
+        self.octave_start = 1
+        self.num_octaves = 8
         self.extra_keys = 1
         self.border_gap = 10.
         self.height = self.white_key_height + self.border_gap * 2

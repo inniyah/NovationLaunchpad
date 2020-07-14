@@ -290,6 +290,7 @@ def main():
         sys.exit(0)
 
     music_info = MusicalInfo()
+    music_info.start()
 
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
@@ -351,6 +352,7 @@ def main():
     if midi_file_player: midi_file_player.stop()
     if lp_manager: lp_manager.stop()
     if evdev_manager: evdev_manager.stop()
+    if music_info: music_info.stop()
 
     print("All threads finished")
 

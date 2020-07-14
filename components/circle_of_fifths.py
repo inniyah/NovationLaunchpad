@@ -21,6 +21,8 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         width = 230 + self.border_gap * 2
         self.size = layout.datatypes.Point(width, height)
 
+        self.use_fuzzy = True
+
     def get_minimum_size(self, ctx):
         return self.size
 
@@ -29,7 +31,7 @@ class CircleOfFifthsElement(layout.root.LayoutElement):
         notes_in_scale = self.music_info.notes_in_scale
         root_note = self.music_info.root_note % 12
         notes_in_scale = self.music_info.notes_in_scale
-        pitch_classes = self.music_info.pitch_classes
+        pitch_classes = self.music_info.fuzzy_pitch_classes if self.use_fuzzy else self.music_info.pitch_classes
         chord_color = self.music_info.getChordColor()
         chord_color_dark = [v * 0.6 for v in chord_color]
         chord_note = self.music_info.chord_note

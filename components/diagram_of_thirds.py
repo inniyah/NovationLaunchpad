@@ -30,13 +30,15 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         width = self.step_size * (self.num_notes + 1) + self.border_hgap * 2
         self.size = layout.datatypes.Point(width, height)
 
+        self.use_fuzzy = True
+
     def get_minimum_size(self, ctx):
         return self.size
 
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
         notes_in_scale = self.music_info.notes_in_scale
-        pitch_classes = self.music_info.pitch_classes
+        pitch_classes = self.music_info.fuzzy_pitch_classes if self.use_fuzzy else self.music_info.pitch_classes
         chord_color = self.music_info.getChordColor()
         chord_color_dark = [v * 0.6 for v in chord_color]
         chord_note = self.music_info.chord_note
@@ -50,6 +52,7 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
         ctx.rectangle(xpos, ypos, width, height)
         ctx.clip()
 
+        ctx.set_line_width(1.0)
         for i in range(self.num_notes):
             n = self.first_note + i
             x = xpos + self.border_hgap + self.step_size * (i + 1)
@@ -175,7 +178,6 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
 
             ctx.set_source_rgb(*note_color)
             ctx.arc(x, y, r, 0, 2. * math.pi)
-            ctx.set_line_width(1.0)
             ctx.fill_preserve()
             ctx.set_source_rgb(*border_color)
             ctx.set_line_width(note_border)
@@ -185,8 +187,8 @@ class DiagramOfThirdsElement(layout.root.LayoutElement):
             if (n % 12 == self.music_info.root_note % 12):
                 is_root_note = True
                 ctx.set_source_rgb(0., 0., 0.)
-                ctx.arc(x, y, r + 6., 0, 2. * math.pi)
                 ctx.set_line_width(1.0)
+                ctx.arc(x, y, r + 6., 0, 2. * math.pi)
                 ctx.stroke()
 
             label = self.music_info.note_names[n % 12]

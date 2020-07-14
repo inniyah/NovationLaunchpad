@@ -4,6 +4,9 @@
 import sys
 sys.path.append('..')
 
+import time
+from threading import Thread, Lock
+
 from .colors import lab_to_rgb, rgb_to_lab
 
 class MusicDefs:
@@ -224,6 +227,27 @@ def get_lower_bit_pos(value):
         value >>= 1
     return 0
 
+class FifoList():
+    def __init__(self):
+        self.data = {}
+        self.nextin = 0
+        self.nextout = 0
+        self.lock = Lock()
+    def append(self, data):
+        with self.lock:
+            self.nextin += 1
+            self.data[self.nextin] = data
+    def pop(self):
+        with self.lock:
+            self.nextout += 1
+            result = self.data[self.nextout]
+            del self.data[self.nextout]
+        return result
+    def peek(self):
+        with self.lock:
+            result = self.data[self.nextout + 1] if self.data else None
+        return result
+
 class MusicalInfo():
     #NOTE_NAMES = ['I', 'ii', 'II', 'iii', 'III', 'IV', 'v', 'V', 'vi', 'VI', 'vii', 'VII']
     NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
@@ -290,6 +314,55 @@ class MusicalInfo():
         self.num_notes_in_chord = 0
         self.symmetry = True
 
+        self.last_notes = FifoList()
+        self.fuzzy_pitch_classes = [0] * 12
+        self.fuzzy_chord = 0
+
+        self.lock = Lock()
+
+    def __del__(self):
+        self.stop()
+
+    def _run(self):
+        print("~ Running Musical Info Thread")
+        mem_threshold = 0.5 # In floating-point seconds
+        while self.running:
+            current_timestamp = time.time_ns() / (10 ** 9) # Converted to floating-point seconds
+            threshold_timestamp = current_timestamp - mem_threshold
+
+            try:
+                queue_timestamp = self.last_notes.peek()[0]
+            except (TypeError, IndexError):
+                queue_timestamp = None
+
+            while not queue_timestamp is None and queue_timestamp < threshold_timestamp:
+                timestamp, pitch_class = self.last_notes.pop()
+
+                print(f"[Delayed Note: ({timestamp}, {pitch_class}))")
+
+                with self.lock:
+                    self.fuzzy_pitch_classes[pitch_class] -= 1
+                    if not self.fuzzy_pitch_classes[pitch_class]: self.fuzzy_chord &= ~(1<<(pitch_class))
+
+                try:
+                    queue_timestamp = self.last_notes.peek()[0]
+                except (TypeError, IndexError):
+                    queue_timestamp = None
+
+            time.sleep(0.001 * 5)
+        print("~ Stopping Musical Info Thread")
+
+    def start(self):
+        self.running = True
+        self.thread = Thread(target = self._run, args = ())
+        self.thread.start()
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+        self.thread = None
+
     def set_root(self, note, scale=MusicDefs.SCALE_DIATONIC_MAJOR):
         self.scale = scale
         self.root_note = note
@@ -299,13 +372,22 @@ class MusicalInfo():
         pitch_class = note % 12
         chord = self.chord
         if velocity:
-            self.keys_pressed[note] |= (1<<channel)
-            self.pitch_classes[pitch_class] += 1
-            if self.pitch_classes[pitch_class]: chord |= 1<<(pitch_class)
+            with self.lock:
+                self.keys_pressed[note] |= (1<<channel)
+                self.pitch_classes[pitch_class] += 1
+                if self.pitch_classes[pitch_class]: chord |= 1<<(pitch_class)
+
+                self.fuzzy_pitch_classes[pitch_class] += 1
+                if self.fuzzy_pitch_classes[pitch_class]: self.fuzzy_chord |= 1<<(pitch_class)
+
         else:
-            self.keys_pressed[note] &= ~(1<<channel)
-            self.pitch_classes[pitch_class] -= 1
-            if not self.pitch_classes[pitch_class]: chord &= ~(1<<(pitch_class))
+            with self.lock:
+                self.keys_pressed[note] &= ~(1<<channel)
+                self.pitch_classes[pitch_class] -= 1
+                if not self.pitch_classes[pitch_class]: chord &= ~(1<<(pitch_class))
+
+            current_timestamp = time.time_ns() / (10 ** 9) # Converted to floating-point seconds
+            self.last_notes.append((current_timestamp, pitch_class))
 
         if chord != self.chord:
             print(f"Pitch class histogram: {chord:#06x} = {chord:>012b}")
