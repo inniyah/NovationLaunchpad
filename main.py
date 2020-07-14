@@ -299,12 +299,13 @@ def main():
     musicstaff = MusicStaffElement(music_info)
 
     box = layout.BoxLM()
-    box.left = lpad
+    box.left = tonalmap
     box.bottom = piano
     #~ box.center = tonalmap
     box.center = dthirds
     #~ box.top = DummyElement(50, 10)
-    box.top = musicstaff
+    #box.top = musicstaff
+    #~ box.top = tonalmap
     box.right = cfifths
     box.margin = 1
 
@@ -324,6 +325,10 @@ def main():
 
     midi_file_out = midi_out
 
+    midi_file_out = MidiRouter()
+    for c in range(15):
+        midi_file_out.add_port(c, piano_manager, c)
+
     #~ midi_file_out = MidiRouter()
     #~ midi_file_out.add_port(0, piano_manager, 10)
     #~ midi_file_out.add_port(1, piano_manager, 11)
@@ -338,6 +343,7 @@ def main():
         midi_file_player_thread = Thread(target = midi_file_player.play)
         midi_file_player_thread.start()
 
+    music_info.set_root(62, MusicDefs.SCALE_BACHIAN_MINOR | MusicDefs.SCALE_NATURAL_MINOR)
     #~ music_info.set_root(69, MusicDefs.SCALE_BACHIAN_MINOR)
 
     Gtk.main()

@@ -99,13 +99,13 @@ class PianoElement(layout.root.LayoutElement):
 
         self.white_key_width = 18.
         self.white_key_height = 100.
-        self.octave_start = 3
-        self.num_octaves = 5
+        self.octave_start = 0
+        self.num_octaves = 9
         self.extra_keys = 1
         self.border_gap = 10.
-        height = self.white_key_height + self.border_gap * 2
-        width = self.white_key_width * (self.num_octaves * len(self.WHITE_KEYS) + self.extra_keys) + self.border_gap * 2
-        self.size = layout.datatypes.Point(width, height)
+        self.height = self.white_key_height + self.border_gap * 2
+        self.width = self.white_key_width * (self.num_octaves * len(self.WHITE_KEYS) + self.extra_keys) + self.border_gap * 2
+        self.size = layout.datatypes.Point(self.width, self.height)
 
         max_octaves = 10
         self.keys_pressed = [0] * (12 * max_octaves)
@@ -115,7 +115,7 @@ class PianoElement(layout.root.LayoutElement):
 
     def render(self, rect, ctx):
         xpos, ypos, width, height = rect.get_data()
-        xpos += self.border_gap
+        xpos += (width - 2 * self.border_gap - self.width) / 2
         ypos += self.border_gap
 
         white_key_width = self.white_key_width

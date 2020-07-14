@@ -65,8 +65,8 @@ class TonalMapElement(layout.root.LayoutElement):
 
         q = queue.Queue()
 
-        for semitone in range(6 * 12):
-            diff_n = semitone - 12 * 3 + 1
+        for semitone in range(8 * 12):
+            diff_n = semitone - 12 * 4 + 1
             note = central_note + diff_n
             name = self.music_info.note_names[note % 12]
             px, py = self.getNotePosition(diff_n)
