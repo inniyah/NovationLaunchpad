@@ -290,6 +290,7 @@ def main():
         sys.exit(0)
 
     music_info = MusicalInfo()
+    music_info.start()
 
     piano = PianoElement(music_info)
     lpad = LaunchpadElement(music_info, LAUNCHPAD_LAYOUTS[args.layout])
@@ -325,6 +326,10 @@ def main():
     midi_file_out = midi_out
 
     #~ midi_file_out = MidiRouter()
+    #~ for c in range(15):
+    #~     midi_file_out.add_port(c, piano_manager, c)
+
+    #~ midi_file_out = MidiRouter()
     #~ midi_file_out.add_port(0, piano_manager, 10)
     #~ midi_file_out.add_port(1, piano_manager, 11)
     #~ midi_file_out.add_port(3, lp_manager, 12)
@@ -345,6 +350,7 @@ def main():
     if midi_file_player: midi_file_player.stop()
     if lp_manager: lp_manager.stop()
     if evdev_manager: evdev_manager.stop()
+    if music_info: music_info.stop()
 
     print("All threads finished")
 
